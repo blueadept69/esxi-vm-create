@@ -405,7 +405,7 @@ if not isDryRun and not CheckHasErrors:
         (stdin, stdout, stderr) = ssh.exec_command("mkdir " + FullPath )
         type(stdin)
         for line in VMX:
-            (stdin, stdout, stderr) = ssh.exec_command("echo " + line + " >>" + MyVM + ".vmx")
+            (stdin, stdout, stderr) = ssh.exec_command("echo \'" + line + "\' >>" + MyVM + ".vmx")
             type(stdin)
 
         # Create vmdk
