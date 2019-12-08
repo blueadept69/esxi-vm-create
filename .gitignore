@@ -1,1 +1,2 @@
-esxi_vm_functions.pyc
+*.pyc
+*.iml

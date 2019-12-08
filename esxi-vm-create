@@ -183,7 +183,8 @@ try:
     VMNICS = []
     for line in stdout.readlines():
         splitLine = re.split(',|\n', line)
-        VMNICS.append(splitLine[0])
+        for pg in splitLine:
+            VMNICS.append(pg.strip())
 except:
     print "The Error is " + str(sys.exc_info()[0])
     sys.exit(1)
@@ -405,13 +406,19 @@ if not isDryRun and not CheckHasErrors:
         (stdin, stdout, stderr) = ssh.exec_command("mkdir " + FullPath )
         type(stdin)
         for line in VMX:
-            (stdin, stdout, stderr) = ssh.exec_command("echo " + line + " >>" + MyVM + ".vmx")
+            (stdin, stdout, stderr) = ssh.exec_command("echo \'" + line + "\' >>" + MyVM + ".vmx")
             type(stdin)
 
         # Create vmdk
         if isVerbose:
             print "Create " + NAME + ".vmdk file"
-        (stdin, stdout, stderr) = ssh.exec_command("vmkfstools -c " + str(HDISK) + "G -d " + DISKFORMAT + " " + MyVM + ".vmdk")
+        #(stdin, stdout, stderr) = ssh.exec_command("vmkfstools -c " + str(HDISK) + "G -d " + DISKFORMAT + " " + MyVM + ".vmdk")
+        (stdin, stdout, stderr) = ssh.exec_command("vmkfstools -c " + str(HDISK) + "G -d " +
+                                                   DISKFORMAT + " " + MyVM + ".vmdk",
+                                                   get_pty=True)
+        for _pty_line in iter(stdout.readline, ""):
+            if isVerbose:
+                print("line")
         type(stdin)
 
         # Register VM
