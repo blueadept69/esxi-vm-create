@@ -1,11 +1,14 @@
 from unittest import TestCase
 import sys
+import io
 import datetime
+
 if sys.version_info.major == 2:
     from mock import patch, mock_open, call
 else:
     from unittest.mock import patch, mock_open
-from esxi-vm-create import main
+from esxi_vm_create import main
+
 
 # expected_default_ConfigData = {'HDISK': 20,
 #                        'LOG': './esxi-vm.log',
@@ -137,3 +140,11 @@ from esxi-vm-create import main
 #     def test_float2human_more(self):
 #         ret_val = float2human(4096)
 #         self.assertEqual("4 kB", ret_val)
+
+class TestMain(TestCase):
+
+    @patch('sys.stdout', new_callable=io.BytesIO)
+    @patch('sys.argv', ['esxi_vm_create.py', '-h'])
+    def test_main_help(self, print_patch):
+        with self.assertRaises(SystemExit):
+            main()
