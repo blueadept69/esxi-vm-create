@@ -73,6 +73,8 @@ def setup_config():
         FromFileConfigData = yaml.safe_load(open(ConfigDataFileLocation))
         ConfigData.update(FromFileConfigData)
 
+    print("{}".format(type(open)))
+    # raise(Exception)
     try:
         with open(ConfigDataFileLocation, 'w') as FD:
             yaml.dump(ConfigData, FD, default_flow_style=False)
@@ -86,6 +88,8 @@ def setup_config():
 
 def SaveConfig(ConfigData):
     ConfigDataFileLocation = os.path.expanduser("~") + "/.esxi-vm.yml"
+    print("{}".format(type(open)))
+    # raise(Exception)
     try:
         with open(ConfigDataFileLocation, 'w') as FD:
             yaml.dump(ConfigData, FD, default_flow_style=False)
