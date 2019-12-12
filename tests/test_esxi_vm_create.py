@@ -22,7 +22,8 @@ class TestMain(TestCase):
             main()
 
     @patch('sys.stdout', new_callable=io.BytesIO)
-    @patch('sys.argv', ['--dry',
+    @patch('sys.argv', ['esxi_vm_create.py',
+                        '--dry',
                         '--Host', 'hostarg',
                         '--User', 'userarg',
                         '--Password', 'passwordarg',
@@ -45,3 +46,29 @@ class TestMain(TestCase):
     def test_main_update_conf_no_name(self, setup_config_patch, saveconfig_patch, print_patch):
         with self.assertRaises(SystemExit):
             main()
+
+    @patch('sys.stdout', new_callable=io.BytesIO)
+    @patch('sys.argv', ['esxi_vm_create.py',
+                        '--dry',
+                        '--Host', 'hostarg',
+                        '--User', 'userarg',
+                        '--Password', 'passwordarg',
+                        '--name', '',
+                        '--cpu', '9',
+                        '--mem', '99',
+                        '--vdisk', '999',
+                        '--iso', 'isoarg',
+                        '--net', 'netarg',
+                        '--mac', 'macarg',
+                        '--store', 'storearg',
+                        '--guestos', 'guestosarg',
+                        '--options', 'optionsarg',
+                        '--verbose',
+                        '--summary',
+                        ])
+    @patch('esxi_vm_create.SaveConfig')
+    @patch('esxi_vm_create.setup_config')
+    def test_main_no_update_no_name(self, setup_config_patch, saveconfig_patch, print_patch):
+        with self.assertRaises(SystemExit):
+            main()
+        #sys.stderr.write(dir(self))
