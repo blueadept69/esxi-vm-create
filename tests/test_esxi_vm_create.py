@@ -1,27 +1,32 @@
+"""
+test_esxi_vm_create.py:
+    unittests for functions/methods in main esxi_vm_create.py script.
+"""
 from unittest import TestCase
 import sys
-import io
-import datetime
-
-if sys.version_info.major == 2:
-    from mock import patch, mock_open, call
-else:
-    from unittest.mock import patch, mock_open
 from esxi_vm_create import main
 
+if sys.version_info.major == 2:
+    from mock import patch, call
+else:
+    from unittest.mock import patch  # pylint: disable=no-name-in-module,import-error,ungrouped-imports
 
 
 class TestMain(TestCase):
+    """ Test main() function """
 
-    @patch('sys.stdout', new_callable=io.BytesIO)
+    @patch('sys.stdout')
     @patch('sys.argv', ['esxi_vm_create.py', '-h'])
-    @patch('esxi_vm_create.SaveConfig')
     @patch('esxi_vm_create.setup_config')
-    def test_main_help(self, saveconfig_patch, setup_config_patch, print_patch):
+    def test_main_help(self, setup_config_patch, print_patch):
+        """ Test mocking -h option passing if sys.exit called. """
         with self.assertRaises(SystemExit):
             main()
+        setup_config_patch.assert_called_with()
+        self.assertIn("usage", str(print_patch.method_calls))
 
-    @patch('sys.stdout', new_callable=io.BytesIO)
+
+    @patch('sys.stdout')
     @patch('sys.argv', ['esxi_vm_create.py',
                         '--dry',
                         '--Host', 'hostarg',
@@ -44,10 +49,17 @@ class TestMain(TestCase):
     @patch('esxi_vm_create.SaveConfig')
     @patch('esxi_vm_create.setup_config')
     def test_main_update_conf_no_name(self, setup_config_patch, saveconfig_patch, print_patch):
+        """ Test mocking a call with --updateDefaults and no --name provided,
+        looking for sys.exit call. """
         with self.assertRaises(SystemExit):
             main()
+        setup_config_patch.assert_called_with()
+        saveconfig_patch.assert_called_once()
+        print_patch.assert_has_calls(
+            [call.write('Saving new Defaults to ~/.esxi-vm.yml'), call.write('\n')])
 
-    @patch('sys.stdout', new_callable=io.BytesIO)
+
+    @patch('sys.stdout')
     @patch('sys.argv', ['esxi_vm_create.py',
                         '--dry',
                         '--Host', 'hostarg',
@@ -65,24 +77,29 @@ class TestMain(TestCase):
                         '--options', 'optionsarg',
                         '--verbose',
                         '--summary',
-                        ])
-    @patch('esxi_vm_create.SaveConfig')
+                       ])
     @patch('esxi_vm_create.setup_config')
-    def test_main_no_update_no_name(self, setup_config_patch, saveconfig_patch, print_patch):
+    def test_main_no_update_no_name(self, setup_config_patch, print_patch):
+        """
+        Test mocking call with no --update called and no --name called.
+        """
         def mock_getitem(key):
+            """ getitem for mock'ed return values to return ints (for keys that get converted to
+            int) and a non-empty string for VMXOPTS since string comparison of mocked return
+            values would otherwise show as __repr__ for mock and not what we're trying
+            to simulate. """
             if key in ('CPU', 'MEM', 'HDISK'):
                 return 0
-            elif key in ('VMXOPTS'):
+            elif key == 'VMXOPTS':
                 return "NIL"
-            else:
-                return ""
+            return ""
         setup_config_patch().__getitem__.side_effect = mock_getitem
         with self.assertRaises(SystemExit):
             main()
-        sys.stderr.write("{}\n".format(dir(setup_config_patch)))
-        sys.stderr.write("{}\n".format(setup_config_patch.mock_calls))
+        print_patch.assert_has_calls(
+            [call.write('ERROR: Missing required option --name'), call.write('\n')])
 
-    @patch('sys.stdout', new_callable=io.BytesIO)
+    @patch('sys.stdout')
     @patch('sys.argv', ['esxi_vm_create.py',
                         '--dry',
                         '--Host', 'hostarg',
@@ -100,23 +117,29 @@ class TestMain(TestCase):
                         '--options', 'optionsarg',
                         '--verbose',
                         '--summary',
-                        ])
-    @patch('esxi_vm_create.SaveConfig')
+                       ])
     @patch('esxi_vm_create.setup_config')
     @patch('esxi_vm_create.paramiko')
-    def test_main_start_ssh(self, paramiko_patch, setup_config_patch, saveconfig_patch, print_patch):
+    def test_main_start_ssh(self, paramiko_patch, setup_config_patch, print_patch):
+        """
+        Test mocking with --name and mocking ssh calls raise exception and test except code.
+        """
         def mock_getitem(key):
+            """ getitem for mock'ed return values to return ints (for keys that get converted to
+            int) and a non-empty string for VMXOPTS since string comparison of mocked return
+            values would otherwise show as __repr__ for mock and not what we're trying
+            to simulate. """
             if key in ('CPU', 'MEM', 'HDISK'):
                 return 0
-            elif key in ('VMXOPTS'):
+            elif key == 'VMXOPTS':
                 return "NIL"
-            else:
-                return ""
+            return ""
         setup_config_patch().__getitem__.side_effect = mock_getitem
-        paramiko_patch.SSHClient().exec_command.side_effect=Exception("TestExcept")
+        paramiko_patch.SSHClient().exec_command.side_effect = Exception("TestExcept")
         with self.assertRaises(SystemExit):
             main()
-        sys.stderr.write("{}\n".format(dir(setup_config_patch)))
-        sys.stderr.write("{}\n".format(setup_config_patch.mock_calls))
-        sys.stderr.write("{}\n".format(paramiko_patch.mock_calls))
-        sys.stderr.write("{}\n".format(paramiko_patch.SSHClient().exec_command.mock_calls))
+        print_patch.assert_has_calls(
+            [call.write("The Error is <type 'exceptions.Exception'>"),
+             call.write('\n'),
+             call.write('Unable to access ESXi Host: hostarg, username: userarg'),
+             call.write('\n')])

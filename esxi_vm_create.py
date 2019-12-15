@@ -97,10 +97,8 @@ def main():
         NET=args.NET
     if args.MAC:
         MAC=args.MAC
-    sys.stderr.write("\nSTORE (args): \"{}\" (\"{}\")\n".format(STORE, args.STORE))
     if args.STORE:
         STORE=args.STORE
-    sys.stderr.write("\nSTORE (args): \"{}\" (\"{}\")\n".format(STORE, args.STORE))
     if STORE == "":
         STORE = "LeastUsed"
     if args.GUESTOS:

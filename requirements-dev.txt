@@ -1,0 +1,3 @@
+# PIP requirements for development work (i.e. testing code smell and tests
+coverage
+pylint
