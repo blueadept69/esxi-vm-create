@@ -108,6 +108,11 @@ class TestSetupConfig(TestCase):
         """ Test, mocking an exception being raised. """
         with self.assertRaises(SystemExit):
             setup_config()
+        yaml_patch.assert_called_once()
+        self.assertTrue(call('./.esxi-vm.yml') in open_patch.call_args_list)
+        self.assertTrue(call('./.esxi-vm.yml', 'w') in open_patch.call_args_list)
+        exists_patch.assert_called_with('./.esxi-vm.yml')
+        expanduser_patch.assert_called_with("~")
 
 
 class TestSaveConfig(TestCase):
@@ -126,13 +131,14 @@ class TestSaveConfig(TestCase):
         expanduser_patch.assert_has_calls([call("~")])
 
     @patch('os.path.expanduser', return_value=".")
-    @patch('os.path.exists', return_value=True)
     @patch('__builtin__.open', side_effect=Exception("TestExcept"))
-    def test_save_config_with_except(self, open_patch, exists_patch, expanduser_patch):
+    def test_save_config_with_except(self, open_patch, expanduser_patch):
         """ Test with file open raising exception. """
         ret_val = SaveConfig(GOOD_YML_TEST_CONFIGDATA)
         self.assertEqual(ret_val, 1)
         open_patch.assert_called_with("./.esxi-vm.yml", 'w')
+        expanduser_patch.assert_called_with("~")
+
 
 
 class TestTheCurrDateTime(TestCase):
