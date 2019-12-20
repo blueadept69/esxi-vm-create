@@ -147,8 +147,8 @@ def main():
         ssh.connect(HOST, username=USER, password=PASSWORD)
 
         (stdin, stdout, stderr) = ssh.exec_command("esxcli system version get |grep Version")
-        type(stdin)
-        if re.match("Version", str(stdout.readlines())) is not None:
+        # type(stdin)
+        if re.match("Version", str(stdout.readlines())) is None:
             print "Unable to determine if this is a ESXi Host: %s, username: %s" % (HOST, USER)
             sys.exit(1)
     except:
@@ -161,7 +161,7 @@ def main():
     #
     try:
         (stdin, stdout, stderr) = ssh.exec_command("esxcli storage filesystem list |grep '/vmfs/volumes/.*true  VMFS' |sort -nk7")
-        type(stdin)
+        # type(stdin)
         VOLUMES = {}
         for line in stdout.readlines():
             splitLine = line.split()
@@ -180,7 +180,7 @@ def main():
     #
     try:
         (stdin, stdout, stderr) = ssh.exec_command("esxcli network vswitch standard list|grep Portgroups|sed 's/^   Portgroups: //g'")
-        type(stdin)
+        # type(stdin)
         VMNICS = []
         for line in stdout.readlines():
             splitLine = re.split(',|\n', line)
@@ -225,7 +225,7 @@ def main():
                 ISO = str(FoundISOPath)
 
             (stdin, stdout, stderr) = ssh.exec_command("ls " + str(ISO))
-            type(stdin)
+            # type(stdin)
             if stdout.readlines() and not stderr.readlines():
                 ISOfound = True
 
@@ -239,7 +239,7 @@ def main():
     VMID = -1
     try:
         (stdin, stdout, stderr) = ssh.exec_command("vim-cmd vmsvc/getallvms")
-        type(stdin)
+        # type(stdin)
         for line in stdout.readlines():
             splitLine = line.split()
             if NAME == splitLine[1]:
@@ -305,7 +305,7 @@ def main():
     try:
         FullPath = DSPATH + "/" + NAME
         (stdin, stdout, stderr) = ssh.exec_command("ls -d " + FullPath)
-        type(stdin)
+        # type(stdin)
         if stdout.readlines() and not stderr.readlines():
             print "ERROR: Directory " + FullPath + " already exists."
             ErrorMessages += " Directory " + FullPath + " already exists."
@@ -405,7 +405,7 @@ def main():
             if isVerbose:
                 print "Create " + NAME + ".vmx file"
             (stdin, stdout, stderr) = ssh.exec_command("mkdir " + FullPath )
-            type(stdin)
+            # type(stdin)
             for line in VMX:
                 (stdin, stdout, stderr) = ssh.exec_command("echo \'" + line + "\' >>" + MyVM + ".vmx")
                 type(stdin)
@@ -420,20 +420,20 @@ def main():
             for _pty_line in iter(stdout.readline, ""):
                 if isVerbose:
                     print("line")
-            type(stdin)
+            # type(stdin)
 
             # Register VM
             if isVerbose:
                 print "Register VM"
             (stdin, stdout, stderr) = ssh.exec_command("vim-cmd solo/registervm " + MyVM + ".vmx")
-            type(stdin)
+            # type(stdin)
             VMID = int(stdout.readlines()[0])
 
             # Power on VM
             if isVerbose:
                 print "Power ON VM"
             (stdin, stdout, stderr) = ssh.exec_command("vim-cmd vmsvc/power.on " + str(VMID))
-            type(stdin)
+            # type(stdin)
             if stderr.readlines():
                 print "Error Power.on VM."
                 Result="Fail"
@@ -442,7 +442,7 @@ def main():
             if NET != "None":
                 (stdin, stdout, stderr) = ssh.exec_command(
                     "grep -i 'ethernet0.*ddress = ' " + MyVM + ".vmx |tail -1|awk '{print $NF}'")
-                type(stdin)
+                # type(stdin)
                 GeneratedMAC = str(stdout.readlines()[0]).strip('\n"')
 
         except:

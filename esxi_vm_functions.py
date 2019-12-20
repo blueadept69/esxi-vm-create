@@ -73,7 +73,7 @@ def setup_config():
         FromFileConfigData = yaml.safe_load(open(ConfigDataFileLocation))
         ConfigData.update(FromFileConfigData)
 
-    print("{}".format(type(open)))
+    # print("{}".format(type(open)))
     # raise(Exception)
     try:
         with open(ConfigDataFileLocation, 'w') as FD:
@@ -81,8 +81,8 @@ def setup_config():
         FD.close()
     except:
         print "Unable to create/update config file " + ConfigDataFileLocation
-        e = sys.exc_info()[0]
-        print "The Error is " + str(e)
+        e = sys.exc_info()
+        print "The Error is " + str(e[0]) + " - " + str(e[1])
         sys.exit(1)
     return ConfigData
 
@@ -94,8 +94,8 @@ def SaveConfig(ConfigData):
         FD.close()
     except:
         print "Unable to create/update config file " + ConfigDataFileLocation
-        e = sys.exc_info()[0]
-        print "The Error is " + str(e)
+        e = sys.exc_info()
+        print "The Error is " + str(e[0]) + " - " + str(e[1])
         return 1
     return 0
 

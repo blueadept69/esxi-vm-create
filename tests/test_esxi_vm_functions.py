@@ -99,20 +99,29 @@ class TestSetupConfig(TestCase):
         exists_patch.assert_called_once()
         expanduser_patch.assert_has_calls([call("~"), call("~")])
 
-    @patch('os.path.expanduser', return_value=".")
+    @patch('sys.stdout')
+    @patch('os.path.expanduser', return_value="/test1")
     @patch('os.path.exists', return_value=True)
     @patch('__builtin__.open', new_callable=mock_open, read_data=TEST_ESXI_VM_YML)
-    @patch('yaml.dump', side_effect=Exception("Test Except"))
-    def test_setup_config_with_exception(self, yaml_patch, open_patch,
-                                         exists_patch, expanduser_patch):
+    @patch('yaml.dump', side_effect=Exception("Test_Setup_Config Except"))
+    # def test_setup_config_with_exception(self, yaml_patch, open_patch,
+    #                                      exists_patch, expanduser_patch, stdout_patch):
+    def test_setup_config_with_exception(self, *args):
         """ Test, mocking an exception being raised. """
+        (yaml_patch, open_patch, exists_patch, expanduser_patch, stdout_patch) = args
         with self.assertRaises(SystemExit):
             setup_config()
         yaml_patch.assert_called_once()
-        self.assertTrue(call('./.esxi-vm.yml') in open_patch.call_args_list)
-        self.assertTrue(call('./.esxi-vm.yml', 'w') in open_patch.call_args_list)
-        exists_patch.assert_called_with('./.esxi-vm.yml')
+        self.assertTrue(call('/test1/.esxi-vm.yml') in open_patch.call_args_list)
+        self.assertTrue(call('/test1/.esxi-vm.yml', 'w') in open_patch.call_args_list)
+        exists_patch.assert_called_with('/test1/.esxi-vm.yml')
         expanduser_patch.assert_called_with("~")
+        stdout_patch.assert_has_calls(
+            [call.write('Unable to create/update config file /test1/.esxi-vm.yml'),
+             call.write('\n'),
+             call.write("The Error is <type 'exceptions.Exception'> - Test_Setup_Config Except"),
+             call.write('\n')]
+        )
 
 
 class TestSaveConfig(TestCase):
@@ -130,14 +139,21 @@ class TestSaveConfig(TestCase):
                       open_patch().write.mock_calls)
         expanduser_patch.assert_has_calls([call("~")])
 
-    @patch('os.path.expanduser', return_value=".")
-    @patch('__builtin__.open', side_effect=Exception("TestExcept"))
-    def test_save_config_with_except(self, open_patch, expanduser_patch):
+    @patch('sys.stdout')
+    @patch('os.path.expanduser', return_value="/test2")
+    @patch('__builtin__.open', side_effect=Exception("TestSaveConfigExcept"))
+    def test_save_config_with_except(self, open_patch, expanduser_patch, stdout_patch):
         """ Test with file open raising exception. """
         ret_val = SaveConfig(GOOD_YML_TEST_CONFIGDATA)
         self.assertEqual(ret_val, 1)
-        open_patch.assert_called_with("./.esxi-vm.yml", 'w')
+        open_patch.assert_called_with("/test2/.esxi-vm.yml", 'w')
         expanduser_patch.assert_called_with("~")
+        stdout_patch.assert_has_calls(
+            [call.write('Unable to create/update config file /test2/.esxi-vm.yml'),
+             call.write('\n'),
+             call.write("The Error is <type 'exceptions.Exception'> - TestSaveConfigExcept"),
+             call.write('\n')
+            ])
 
 
 
