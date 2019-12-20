@@ -152,7 +152,8 @@ def main():
             print "Unable to determine if this is a ESXi Host: %s, username: %s" % (HOST, USER)
             sys.exit(1)
     except:
-        print "The Error is " + str(sys.exc_info()[0])
+        e = sys.exc_info()
+        print "The Error is " + str(e[0]) + " - " + str(e[1])
         print "Unable to access ESXi Host: %s, username: %s" % (HOST, USER)
         sys.exit(1)
 
@@ -168,7 +169,8 @@ def main():
             VOLUMES[splitLine[0]] = splitLine[1]
             LeastUsedDS = splitLine[1]
     except:
-        print "The Error is " + str(sys.exc_info()[0])
+        e = sys.exc_info()
+        print "The Error is " + str(e[0]) + " - " + str(e[1])
         sys.exit(1)
 
     if STORE == "LeastUsed":
