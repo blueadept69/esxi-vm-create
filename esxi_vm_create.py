@@ -252,8 +252,9 @@ def main():
                 ErrorMessages += " VM " + NAME + " already exists."
                 CheckHasErrors = True
     except:
-            print "The Error is " + str(sys.exc_info()[0])
-            sys.exit(1)
+        e = sys.exc_info()
+        print "The Error is " + str(e[0]) + " - " + str(e[1])
+        sys.exit(1)
 
     #
     #      Do checks here
