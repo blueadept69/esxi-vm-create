@@ -189,7 +189,8 @@ def main():
             for pg in splitLine:
                 VMNICS.append(pg.strip())
     except:
-        print "The Error is " + str(sys.exc_info()[0])
+        e = sys.exc_info()
+        print "The Error is " + str(e[0]) + " - " + str(e[1])
         sys.exit(1)
 
     #
@@ -232,7 +233,8 @@ def main():
                 ISOfound = True
 
         except:
-            print "The Error is " + str(sys.exc_info()[0])
+            e = sys.exc_info()
+            print "The Error is " + str(e[0]) + " - " + str(e[1])
             sys.exit(1)
 
     #
