@@ -1,5 +1,5 @@
 """
-test_esxi_vm_create.py:
+test_esxi_vm_create_initial.py:
     unittests for functions/methods in main esxi_vm_create.py script.
 """
 from unittest import TestCase
