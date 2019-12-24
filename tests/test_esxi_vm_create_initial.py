@@ -411,6 +411,7 @@ class TestMain(TestCase):
             elif cmd == "vim-cmd vmsvc/getallvms":
                 raise Exception("TEST_GETALLVMS_FAIL")
             return stdin, stdout, stderr
+
         paramiko_patch.SSHClient().exec_command = mock_ssh_command
         with self.assertRaises(SystemExit):
             main()
