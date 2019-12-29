@@ -12,6 +12,7 @@ else:
 
 TEST_ISO_NAME_ARG = "isoarg"
 TEST_ISO_PATH_ARG = "/vmfs/volumes/path/to/iso"
+TEST_VDISK_SIZE = '999'
 
 TEST_ARGV_BASE = ['esxi_vm_create.py',
                   # '--dry',
@@ -21,7 +22,7 @@ TEST_ARGV_BASE = ['esxi_vm_create.py',
                   # '--name', '',
                   '--cpu', '9',
                   '--mem', '99',
-                  '--vdisk', '999',
+                  '--vdisk', TEST_VDISK_SIZE,
                   # '--iso', 'isoarg',
                   '--iso', 'None',
                   # '--iso', TEST_ISO_NAME_ARG,
@@ -52,9 +53,11 @@ TEST_ARGV_DRY_EMPTY_NAME_STORE.extend(['--dry',
                                        '--iso', TEST_ISO_NAME_ARG,
                                       ])
 
+TEST_VM_NAME = "namearg"
+
 TEST_ARGV_DRY_EMPTY_STORE = list(TEST_ARGV_BASE)
 TEST_ARGV_DRY_EMPTY_STORE.extend(['--dry',
-                                  '--name', 'namearg',
+                                  '--name', TEST_VM_NAME,
                                   '--store', '',
                                   '--iso', TEST_ISO_NAME_ARG,
                                   '--mac', '12:34:56',
@@ -66,7 +69,7 @@ TEST_ARGV_DRY_EMPTY_STORE_BAD_MAC.extend(['--mac', 'bad_mac_arg',
 
 TEST_ARGV_DRY_EMPTY_STORE_NO_ISO_AND_NET = list(TEST_ARGV_BASE)
 TEST_ARGV_DRY_EMPTY_STORE_NO_ISO_AND_NET.extend(['--dry',
-                                                 '--name', 'namearg',
+                                                 '--name', TEST_VM_NAME,
                                                  '--store', '',
                                                  '--iso', 'None',
                                                 ])
@@ -74,7 +77,7 @@ TEST_ARGV_DRY_EMPTY_STORE_NO_ISO_AND_NET.extend(['--dry',
 TEST_ARGV_PLUS_BAD_CPU_MEM_HDISK = list(TEST_ARGV_BASE)
 TEST_ARGV_PLUS_BAD_CPU_MEM_HDISK.extend(['--dry',
                                          '--iso', 'None',
-                                         '--name', 'namearg',
+                                         '--name', TEST_VM_NAME,
                                          '--store', '',
                                          '--cpu', '129',
                                          '--mem', '8192',
@@ -83,7 +86,7 @@ TEST_ARGV_PLUS_BAD_CPU_MEM_HDISK.extend(['--dry',
 
 TEST_ARGV_PLUS_BAD_DSSTORE_ISO = list(TEST_ARGV_BASE)
 TEST_ARGV_PLUS_BAD_DSSTORE_ISO.extend(['--dry',
-                                       '--name', 'namearg',
+                                       '--name', TEST_VM_NAME,
                                        '--store', '',
                                        '--store', 'badstore',
                                        '--iso', TEST_ISO_PATH_ARG,
@@ -101,7 +104,7 @@ TEST_ARGV_PLUS_EXIST_DSSTORE_CPUS7.extend(['--dry',
 
 TEST_ARGV_DRY_EMPTY_STORE_ISO_NONE = list(TEST_ARGV_BASE)
 TEST_ARGV_DRY_EMPTY_STORE_ISO_NONE.extend(['--dry',
-                                           '--name', 'namearg',
+                                           '--name', TEST_VM_NAME,
                                            '--store', '',
                                            '--iso', 'None',
                                            '--net', 'VM Network',
@@ -158,6 +161,43 @@ SSH_BASE_CONDITIONS = {
     "ls -d ": {
         'stdout': [""],
     },
+    "mkdir ": {
+        'stdout': [],
+    },
+    "echo \'": {
+        'stdout': [],
+    },
+    "vmkfstools -c " + TEST_VDISK_SIZE + "G -d thick": {
+        'stdout': [],
+        'stderr': ['Incorrect disk option "thick"'],
+    },
+    "vmkfstools -c " + TEST_VDISK_SIZE + "G -d thin": {
+        'stdout': ['Create: 100% done.'],
+        'stderr': [],
+    },
+    "vmkfstools -c " + TEST_VDISK_SIZE + "G -d zeroedthick": {
+        'stdout': ['Create: 100% done.'],
+        'stderr': [],
+    },
+    "vmkfstools -c " + TEST_VDISK_SIZE + "G -d eagerzeroedthick": {
+        'stdout': ["Creating disk 'foo.vmdk' and zeroing it out...",
+                   "\rCreate: 10% done.\rCreate: 11% done.\rCreate: 12% done.\r"
+                   "Create: 14% done.\rCreate: 15%\r"
+                   "Create: 100% done."],
+        'stderr': [],
+    },
+    "vim-cmd solo/registervm " + "/vmfs/volumes/5c2125df-7d95f6bd-1be1-001517d9a462/" +
+    TEST_VM_NAME + ".vmx": {
+        'stdout': ['42'],
+    },
+    "vim-cmd vmsvc/power.on 42": {
+        'stdout': ['Powering on VM:'],
+        'stderr': ['TEST ERROR'],
+    },
+    "grep -i 'ethernet0.*ddress = '": {
+        'stdout': ['"00:0c:29:e3:f9:8e"'],
+    },
+
 }
 
 SSH_CONDITIONS = {}
