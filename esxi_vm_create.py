@@ -422,9 +422,11 @@ def main():
             (stdin, stdout, stderr) = ssh.exec_command("vmkfstools -c " + str(HDISK) + "G -d " +
                                                        DISKFORMAT + " " + MyVM + ".vmdk",
                                                        get_pty=True)
-            for _pty_line in iter(stdout.readline, ""):
-                if isVerbose:
-                    print("line")
+            for _pty_line in stdout.readlines():
+                print(_pty_line)
+            # for _pty_line in iter(stdout.readline, ""):
+            #     if isVerbose:
+            #         print(_pty_line)
             # type(stdin)
 
             # Register VM

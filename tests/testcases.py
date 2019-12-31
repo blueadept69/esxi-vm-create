@@ -102,13 +102,21 @@ TEST_ARGV_PLUS_EXIST_DSSTORE_CPUS7.extend(['--dry',
                                            '--options', 'numvcpus = "7"',
                                           ])
 
-TEST_ARGV_DRY_EMPTY_STORE_ISO_NONE = list(TEST_ARGV_BASE)
-TEST_ARGV_DRY_EMPTY_STORE_ISO_NONE.extend(['--dry',
-                                           '--name', TEST_VM_NAME,
-                                           '--store', '',
-                                           '--iso', 'None',
-                                           '--net', 'VM Network',
-                                          ])
+TEST_ARGV_DRY_EMPTY_STORE_MAC_ISO_NONE = list(TEST_ARGV_BASE)
+TEST_ARGV_DRY_EMPTY_STORE_MAC_ISO_NONE.extend(['--dry',
+                                               '--name', TEST_VM_NAME,
+                                               '--store', '',
+                                               '--iso', 'None',
+                                               '--net', 'VM Network',
+                                               '--mac', '',
+                                              ])
+
+TEST_ARGV_EMPTY_STORE_ISO_NONE = list(TEST_ARGV_BASE)
+TEST_ARGV_EMPTY_STORE_ISO_NONE.extend(['--name', TEST_VM_NAME,
+                                       '--store', '',
+                                       '--iso', 'None',
+                                       '--net', 'VM Network',
+                                      ])
 
 SSH_BASE_CONDITIONS = {
     "esxcli system version get |grep Version": {
@@ -186,6 +194,10 @@ SSH_BASE_CONDITIONS = {
                    "Create: 100% done."],
         'stderr': [],
     },
+    "vmkfstools -c " + TEST_VDISK_SIZE + "G -d  /": {
+        'stdout': [],
+        'stderr': ["Missing required argument"],
+    },
     "vim-cmd solo/registervm " + "/vmfs/volumes/5c2125df-7d95f6bd-1be1-001517d9a462/" +
     TEST_VM_NAME + ".vmx": {
         'stdout': ['42'],
@@ -197,7 +209,6 @@ SSH_BASE_CONDITIONS = {
     "grep -i 'ethernet0.*ddress = '": {
         'stdout': ['"00:0c:29:e3:f9:8e"'],
     },
-
 }
 
 SSH_CONDITIONS = {}
@@ -225,7 +236,9 @@ def mock_ssh_command_handler(cmd_param, conditions=None):
 
     stdin = MagicMock()
     stdout = MagicMock()
+    # stdout = None
     stderr = MagicMock()
+    # stderr = None
 
     found_appropriate_condition = False
 
@@ -243,11 +256,12 @@ def mock_ssh_command_handler(cmd_param, conditions=None):
         elif 'stderr' in found_appropriate_condition.keys():
             stderr.readlines.return_value = found_appropriate_condition.get('stderr')
         stdout.readlines.return_value = found_appropriate_condition.get('stdout')
-    if not found_appropriate_condition:
+    else:
         sys.stderr.write("mock_ssh_command_handler: *** No appropriate condition found. ***\n")
     return stdin, stdout, stderr
 
-def mock_ssh_command(cmd):
+def mock_ssh_command(cmd, get_pty=False):  # pylint: disable=unused-argument
     """ mocking the exec_command method of paramiko to return data we need to test for. Relies on
         SSH_CONDITIONS being set by each test. """
+    sys.stderr.write("====>>> mock_ssh_command: cmd={}\n".format(cmd))
     return mock_ssh_command_handler(cmd, SSH_CONDITIONS)
