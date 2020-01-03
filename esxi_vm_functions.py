@@ -12,6 +12,67 @@ from math import log
 #
 #
 
+class Config:
+    """ Class to handle program configuration """
+
+    def __init__(self):
+        self.data = dict()
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def set(self, key, value):
+        self.data[key] = value
+
+    def get(self, key):
+        return self.data.get(key)
+
+
+class Message:
+    """ Class to handle error messages """
+
+    def __init__(self, text=""):
+        """ Init object """
+        self.messages = text
+
+    def __repr__(self):
+        return "Message({})".format(self.messages)
+
+    def __str__(self):
+        return str(self.messages)
+
+    def __add__(self, other):
+        self.add(other)
+        return self
+
+    def __iadd__(self, other):
+        self.add(other)
+        return self
+
+    def __bool__(self):
+        return len(self.messages) > 0
+
+    __nonzero__ = __bool__
+
+    def add(self, text):
+        """ Add text to collection of error messages """
+        if self.messages and self.messages[-1] not in ('{', ',', '"'):
+            self.messages += " "
+        self.messages += text
+
+    def show(self):
+        """ Show messages collected """
+        return self.__str__()
+
+    def tty_print(self):
+        """ Print messages to tty """
+        print(self.messages)
+
+    def log_to_file(self, logfile):
+        """ Append messages to log file """
+        with open(logfile, "a+w") as _fd:
+            _fd.write(self.__str__())
+
 
 def setup_config():
 

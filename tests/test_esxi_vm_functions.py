@@ -6,12 +6,12 @@ from unittest import TestCase
 import sys
 import datetime
 
-from esxi_vm_functions import setup_config, SaveConfig, theCurrDateTime, float2human
+from esxi_vm_functions import setup_config, SaveConfig, theCurrDateTime, float2human, Message
 
 if sys.version_info.major == 2:
     from mock import patch, mock_open, call
 else:
-    from unittest.mock import patch, mock_open # pylint: disable=no-name-in-module,import-error,ungrouped-imports
+    from unittest.mock import patch, mock_open  # pylint: disable=no-name-in-module,import-error,ungrouped-imports
 
 EXPECTED_DEFAULT_CONFIGDATA = {'HDISK': 20,
                                'LOG': './esxi-vm.log',
@@ -30,7 +30,7 @@ EXPECTED_DEFAULT_CONFIGDATA = {'HDISK': 20,
                                'MEM': 4,
                                'isSummary': False,
                                'USER': 'root'
-                              }
+                               }
 
 TEST_ESXI_VM_YML = """CPU: 9
 DISKFORMAT: thick
@@ -68,9 +68,10 @@ GOOD_YML_TEST_CONFIGDATA = {'HDISK': 42,
                             'MEM': 6,
                             'isSummary': True,
                             'USER': 'test-user'
-                           }
+                            }
 
 TEST_DATETIME = datetime.datetime(2019, 12, 8, 21, 30, 9, 31532)
+
 
 class TestSetupConfig(TestCase):
     """ Test setup_config function """
@@ -153,8 +154,7 @@ class TestSaveConfig(TestCase):
              call.write('\n'),
              call.write("The Error is <type 'exceptions.Exception'> - TestSaveConfigExcept"),
              call.write('\n')
-            ])
-
+             ])
 
 
 class TestTheCurrDateTime(TestCase):
@@ -185,3 +185,17 @@ class TestFloat2human(TestCase):
         """ Test that 4096 returns '4 kB' """
         ret_val = float2human(4096)
         self.assertEqual("4 kB", ret_val)
+
+
+class TestErrorMessage(TestCase):
+    def test_add(self):
+        test_obj = Message()
+        test_obj.messages = "Seed message."
+        test_obj += "Test Message 1."
+        test_obj = test_obj + "Test Message 2."
+        self.assertEqual("Seed message. Test Message 1. Test Message 2.", test_obj.messages)
+
+    def test_show(self):
+        test_obj = Message()
+        test_obj.messages = "test_show test message"
+        self.assertEqual("test_show test message", test_obj.show())

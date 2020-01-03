@@ -10,10 +10,11 @@ import paramiko                   # For remote ssh
 import yaml
 import warnings
 
-from esxi_vm_functions import *
+from esxi_vm_functions import setup_config, SaveConfig, theCurrDateTime, Message, Config
 
 def main():
     #      Defaults and Variable setup
+    ConfigData = Config()
     ConfigData = setup_config()
     NAME = ""
     LOG = ConfigData['LOG']
@@ -34,7 +35,8 @@ def main():
     GUESTOS = ConfigData['GUESTOS']
     VMXOPTS = ConfigData['VMXOPTS']
 
-    ErrorMessages = ""
+    # ErrorMessages = ""
+    ErrorMessages = Message()
     MAC = ""
     GeneratedMAC = ""
     ISOfound = False
@@ -134,8 +136,9 @@ def main():
     #
     #      main()
     #
-    LogOutput = '{'
-    LogOutput += '"datetime":"' + str(theCurrDateTime()) + '",'
+    # LogOutput = '{'
+    LogOutput = Message("{")
+    LogOutput += '"datetime":"{}",'.format(str(theCurrDateTime()))
 
     if NAME == "":
         print "ERROR: Missing required option --name"
@@ -206,7 +209,8 @@ def main():
             MAC="00:50:56:" + MAC.replace("-",":")
         else:
             print "ERROR: " + MAC + " Invalid MAC address."
-            ErrorMessages += " " + MAC + " Invalid MAC address."
+            # ErrorMessages += " " + MAC + " Invalid MAC address."
+            ErrorMessages += "{} Invalid MAC address.".format(MAC)
             CheckHasErrors = True
 
 
@@ -249,7 +253,8 @@ def main():
             if NAME == splitLine[1]:
                 VMID = splitLine[0]
                 print "ERROR: VM " + NAME + " already exists."
-                ErrorMessages += " VM " + NAME + " already exists."
+                # ErrorMessages += " VM " + NAME + " already exists."
+                ErrorMessages += "VM {} already exists.".format(NAME)
                 CheckHasErrors = True
     except:
         e = sys.exc_info()
@@ -263,19 +268,22 @@ def main():
     #  Check CPU
     if CPU < 1 or CPU > 128:
         print str(CPU) + " CPU out of range. [1-128]."
-        ErrorMessages += " " + str(CPU) + " CPU out of range. [1-128]."
+        # ErrorMessages += " " + str(CPU) + " CPU out of range. [1-128]."
+        ErrorMessages += "{} CPU out of range. [1-128].".format(str(CPU))
         CheckHasErrors = True
 
     #  Check MEM
     if MEM < 1 or MEM > 4080:
         print str(MEM) + "GB Memory out of range. [1-4080]."
-        ErrorMessages += " " + str(MEM) + "GB Memory out of range. [1-4080]."
+        # ErrorMessages += " " + str(MEM) + "GB Memory out of range. [1-4080]."
+        ErrorMessages += "{} GB Memory out of range. [1-4080].".format(str(MEM))
         CheckHasErrors = True
 
     #  Check HDISK
     if HDISK < 1 or HDISK > 63488:
         print "Virtual Disk size " + str(HDISK) + "GB out of range. [1-63488]."
-        ErrorMessages += " Virtual Disk size " + str(HDISK) + "GB out of range. [1-63488]."
+        # ErrorMessages += " Virtual Disk size " + str(HDISK) + "GB out of range. [1-63488]."
+        ErrorMessages += "Virtual Disk size {} GB out of range. [1-63488].".format(str(HDISK))
         CheckHasErrors = True
 
     #  Convert STORE to path and visa-versa
@@ -290,20 +298,20 @@ def main():
         print "ERROR: Disk Storage " + STORE + " doesn't exist. "
         print "    Available Disk Stores: " + str([str(item) for item in V])
         print "    LeastUsed Disk Store : " + str(LeastUsedDS)
-        ErrorMessages += " Disk Storage " + STORE + " doesn't exist. "
+        ErrorMessages += "Disk Storage {} doesn't exist.".format(STORE)
         CheckHasErrors = True
 
     #  Check NIC  (NIC record)
     if (NET not in VMNICS) and (NET != "None"):
         print "ERROR: Virtual NIC " + NET + " doesn't exist."
         print "    Available VM NICs: " + str([str(item) for item in VMNICS]) + " or 'None'"
-        ErrorMessages += " Virtual NIC " + NET + " doesn't exist."
+        ErrorMessages += "Virtual NIC {} doesn't exist.".format(NET)
         CheckHasErrors = True
 
     #  Check ISO exists
     if ISO != "" and not ISOfound:
         print "ERROR: ISO " + ISO + " not found.  Use full path to ISO"
-        ErrorMessages += " ISO " + ISO + " not found.  Use full path to ISO"
+        ErrorMessages += "ISO {} not found.  Use full path to ISO".format(ISO)
         CheckHasErrors = True
 
     #  Check if DSPATH/NAME aready exists
@@ -313,7 +321,7 @@ def main():
         # type(stdin)
         if stdout.readlines() and not stderr.readlines():
             print "ERROR: Directory " + FullPath + " already exists."
-            ErrorMessages += " Directory " + FullPath + " already exists."
+            ErrorMessages += "Directory {} already exists.".format(FullPath)
             CheckHasErrors = True
     except:
         pass
@@ -456,7 +464,7 @@ def main():
             print "There was an error creating the VM."
             e = sys.exc_info()
             print "The Error is " + str(e[0]) + " - " + str(e[1])
-            ErrorMessages += " There was an error creating the VM."
+            ErrorMessages += "There was an error creating the VM."
             Result = "Fail"
 
     #      Print Summary
@@ -480,14 +488,15 @@ def main():
     LogOutput += '"MAC Used":"' + GeneratedMAC + '",'
     LogOutput += '"Dry Run":"' + str(isDryRun) + '",'
     LogOutput += '"Verbose":"' + str(isVerbose) + '",'
-    if ErrorMessages != "":
-        LogOutput += '"Error Message":"' + ErrorMessages + '",'
+    if ErrorMessages:
+        LogOutput += '"Error Message":"{}",'.format(ErrorMessages)
     LogOutput += '"Result":"' + Result + '",'
     LogOutput += '"Completion Time":"' + str(theCurrDateTime()) + '"'
     LogOutput += '}\n'
     try:
-        with open(LOG, "a+w") as FD:
-            FD.write(LogOutput)
+        # with open(LOG, "a+w") as FD:
+        #     FD.write(str(LogOutput))
+        LogOutput.log_to_file(LOG)
     except:
         print "Error writing to log file: " + LOG
 

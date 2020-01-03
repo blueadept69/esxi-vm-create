@@ -368,7 +368,7 @@ class TestMainPrepare(TestCase):
                           '"Guest OS":"guestosarg","MAC":"12:34:56:78:9a:bc",'
                           # ***** NOTE **** Why is MAC Used different from MAC?????
                           '"MAC Used":"","Dry Run":"","Verbose":"True",'
-                          '"Error Message":" There was an error creating the VM.",'
+                          '"Error Message":"There was an error creating the VM.",'
                           '"Result":"Fail",'
                           '"Completion Time":"2019-12-08T21:30:09.031532"}\n'),
              call().__exit__(None, None, None)])
