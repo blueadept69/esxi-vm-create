@@ -178,9 +178,7 @@ class TestMainPrepare(TestCase):
         valid info discovery - set to run as dry run.
         """
         (open_patch, paramiko_patch, setup_config_patch,
-        # (paramiko_patch, setup_config_patch,
          saveconfig_patch, print_patch, datetime_patch) = args
-         # saveconfig_patch, datetime_patch) = args
 
         sys.stderr.write("=========> IN: test_main_ok_prep_mocked_log\n")
         testcases.MOCK_GETITEM_LOGFILE = "logfile"
@@ -191,8 +189,6 @@ class TestMainPrepare(TestCase):
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
 
-        # import pdb
-        # pdb.set_trace()
         with self.assertRaises(SystemExit):
             main()
         open_patch.assert_called()
@@ -339,9 +335,7 @@ class TestMainPrepare(TestCase):
         valid info discovery - set to run as dry run.
         """
         (open_patch, paramiko_patch, setup_config_patch,
-         # (paramiko_patch, setup_config_patch,
          saveconfig_patch, print_patch, datetime_patch) = args
-        # saveconfig_patch, datetime_patch) = args
 
         sys.stderr.write("=========> IN: test_main_ok_prep_mocked_log\n")
         testcases.MOCK_GETITEM_LOGFILE = "logfile"
@@ -359,8 +353,6 @@ class TestMainPrepare(TestCase):
             }
         )
 
-        # import pdb
-        # pdb.set_trace()
         with self.assertRaises(SystemExit):
             main()
         open_patch.assert_called()
@@ -462,9 +454,9 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('Create namearg.vmx file'),
              call.write('\n'),
-             call.write("The Error is <type 'exceptions.Exception'> - TestMKDIRFail"),
-             call.write('\n'),
              call.write('There was an error creating the VM.'),
+             call.write('\n'),
+             call.write("The Error is <type 'exceptions.Exception'> - TestMKDIRFail"),
              call.write('\n'),
              call.write('\nCreate VM Success:'),
              call.write('\n'),

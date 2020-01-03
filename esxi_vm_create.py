@@ -454,6 +454,8 @@ def main():
 
         except:
             print "There was an error creating the VM."
+            e = sys.exc_info()
+            print "The Error is " + str(e[0]) + " - " + str(e[1])
             ErrorMessages += " There was an error creating the VM."
             Result = "Fail"
 
