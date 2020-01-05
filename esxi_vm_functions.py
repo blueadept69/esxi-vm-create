@@ -19,10 +19,15 @@ class Config:
         self.data = dict()
 
     def __getitem__(self, key):
-        return getattr(self, key)
+        return self.data.get(key)
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
 
     def set(self, key, value):
+        sys.stderr.write("******* Config.set(key='{}', value='{}')\n".format(key, value))
         self.data[key] = value
+        sys.stderr.write("******* Config.data: {}\n".format(self.data))
 
     def get(self, key):
         return self.data.get(key)
@@ -70,8 +75,11 @@ class Message:
 
     def log_to_file(self, logfile):
         """ Append messages to log file """
-        with open(logfile, "a+w") as _fd:
-            _fd.write(self.__str__())
+        try:
+            with open(logfile, "a+w") as _fd:
+                _fd.write(self.__str__())
+        except Exception as e:
+            print "Error writing to log file: {}".format(logfile)
 
 
 def setup_config():

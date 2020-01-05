@@ -228,6 +228,28 @@ def mock_getitem(key):
         return MOCK_GETITEM_LOGFILE
     return ""
 
+def mock_keys():
+    """ keys method mock'ed to return list of config dict keys. """
+    return [
+        'LOG',
+        'isDryRun',
+        'isVerbose',
+        'isSummary',
+        'HOST',
+        'USER',
+        'PASSWORD',
+        'CPU',
+        'MEM',
+        'HDISK',
+        'DISKFORMAT',
+        'VIRTDEV',
+        'STORE',
+        'NET',
+        'ISO',
+        'GUESTOS',
+        'VMXOPTS',
+    ]
+
 def mock_ssh_command_handler(cmd_param, conditions=None):
     """ Function to handle calls to mock_ssh_command - allowing return values to change
      based on appropriate tests. """

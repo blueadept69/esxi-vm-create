@@ -6,7 +6,7 @@ from unittest import TestCase
 import sys
 from esxi_vm_create import main
 from tests import testcases
-from tests.testcases import mock_getitem
+from tests.testcases import mock_getitem, mock_keys
 
 if sys.version_info.major == 2:
     from mock import patch, call
@@ -32,6 +32,7 @@ class TestMainPrepare(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_ok_thru_getallvms_dry_true_empty_log\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
@@ -185,6 +186,7 @@ class TestMainPrepare(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_bad_cpu_mem_and_hdisk\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         testcases.MOCK_GETITEM_LOGFILE = ""
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
@@ -347,6 +349,7 @@ class TestMainPrepare(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_bad_dsstore_and_iso\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
@@ -508,6 +511,7 @@ class TestMainPrepare(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_dspath_name_exists\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)

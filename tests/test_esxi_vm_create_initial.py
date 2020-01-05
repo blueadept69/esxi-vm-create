@@ -6,7 +6,7 @@ from unittest import TestCase
 import sys
 from esxi_vm_create import main
 from tests import testcases
-from tests.testcases import mock_getitem
+from tests.testcases import mock_getitem, mock_keys
 
 if sys.version_info.major == 2:
     from mock import patch, call
@@ -25,6 +25,8 @@ class TestMainInitial(TestCase):
     def test_main_help(self, setup_config_patch, print_patch):
         """ Test mocking -h option passing if sys.exit called. """
         sys.stderr.write("=========> IN: test_main_help\n")
+        setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         with self.assertRaises(SystemExit):
             main()
         setup_config_patch.assert_called_with()
@@ -39,6 +41,8 @@ class TestMainInitial(TestCase):
         """ Test mocking a call with --updateDefaults and no --name provided,
         looking for sys.exit call. """
         sys.stderr.write("=========> IN: test_main_update_conf_no_name\n")
+        setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         with self.assertRaises(SystemExit):
             main()
         setup_config_patch.assert_called_with()
@@ -56,6 +60,7 @@ class TestMainInitial(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_no_update_no_name\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         with self.assertRaises(SystemExit):
             main()
         saveconfig_patch.assert_not_called()
@@ -74,6 +79,7 @@ class TestMainInitial(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_start_ssh\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command.side_effect = Exception("TestExcept")
         with self.assertRaises(SystemExit):
             main()
@@ -97,6 +103,7 @@ class TestMainInitial(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_esxcli_version_fail\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
@@ -137,6 +144,7 @@ class TestMainInitial(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_esxcli_volume_fail\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
@@ -168,6 +176,7 @@ class TestMainInitial(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_esxcli_portgroups_fail\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
@@ -200,6 +209,7 @@ class TestMainInitial(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_find_iso_fail_mac1\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
@@ -232,6 +242,7 @@ class TestMainInitial(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_find_iso_fail_mac2\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
@@ -264,6 +275,7 @@ class TestMainInitial(TestCase):
         """
         sys.stderr.write("=========> IN: test_main_ok_find_iso_fail_getallvms\n")
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)

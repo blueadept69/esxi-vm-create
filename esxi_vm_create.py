@@ -15,12 +15,14 @@ from esxi_vm_functions import setup_config, SaveConfig, theCurrDateTime, Message
 def main():
     #      Defaults and Variable setup
     ConfigData = Config()
-    ConfigData = setup_config()
-    NAME = ""
+    _config = setup_config()
+    for _key in _config.keys():
+        ConfigData.set(_key, _config[_key])
+    ConfigData.set("NAME", "")
     LOG = ConfigData['LOG']
-    isDryRun = ConfigData['isDryRun']
+    # isDryRun = ConfigData['isDryRun']
     isVerbose = ConfigData['isVerbose']
-    isSummary = ConfigData['isSummary']
+    # isSummary = ConfigData['isSummary']
     HOST = ConfigData['HOST']
     USER = ConfigData['USER']
     PASSWORD = ConfigData['PASSWORD']
@@ -33,7 +35,7 @@ def main():
     NET = ConfigData['NET']
     ISO = ConfigData['ISO']
     GUESTOS = ConfigData['GUESTOS']
-    VMXOPTS = ConfigData['VMXOPTS']
+    # VMXOPTS = ConfigData['VMXOPTS']
 
     # ErrorMessages = ""
     ErrorMessages = Message()
@@ -51,7 +53,7 @@ def main():
     #
     parser = argparse.ArgumentParser(description='ESXi Create VM utility.')
 
-    parser.add_argument('-d', '--dry', dest='isDryRunarg', action='store_true', help="Enable Dry Run mode  (" + str(isDryRun) + ")")
+    parser.add_argument('-d', '--dry', dest='isDryRunarg', action='store_true', help="Enable Dry Run mode  (" + str(ConfigData['isDryRun']) + ")")
     parser.add_argument("-H", "--Host", dest='HOST', type=str, help="ESXi Host/IP  (" + str(HOST) + ")")
     parser.add_argument("-U", "--User", dest='USER', type=str, help="ESXi Host username  (" + str(USER) + ")")
     parser.add_argument("-P", "--Password", dest='PASSWORD', type=str, help="ESXi Host password  (*****)")
@@ -66,7 +68,7 @@ def main():
     parser.add_argument("-g", "--guestos", dest='GUESTOS', type=str, help="Guest OS. (" + str(GUESTOS) + ")")
     parser.add_argument("-o", "--options", dest='VMXOPTS', type=str, default='NIL', help="Comma list of VMX Options.")
     parser.add_argument('-V', '--verbose', dest='isVerbosearg', action='store_true', help="Enable Verbose mode  (" + str(isVerbose) + ")")
-    parser.add_argument('--summary', dest='isSummaryarg', action='store_true', help="Display Summary  (" + str(isSummary) + ")")
+    parser.add_argument('--summary', dest='isSummaryarg', action='store_true', help="Display Summary  (" + str(ConfigData['isSummary']) + ")")
     parser.add_argument("-u", "--updateDefaults", dest='UPDATE', action='store_true', help="Update Default VM settings stored in ~/.esxi-vm.yml")
     #parser.add_argument("--showDefaults", dest='SHOW', action='store_true', help="Show Default VM settings stored in ~/.esxi-vm.yml")
 
@@ -74,11 +76,11 @@ def main():
     args = parser.parse_args()
 
     if args.isDryRunarg:
-        isDryRun = True
+        ConfigData['isDryRun'] = True
     if args.isVerbosearg:
         isVerbose = True
     if args.isSummaryarg:
-        isSummary = True
+        ConfigData['isSummary'] = True
     if args.HOST:
        HOST=args.HOST
     if args.USER:
@@ -86,7 +88,11 @@ def main():
     if args.PASSWORD:
         PASSWORD=args.PASSWORD
     if args.NAME:
-        NAME=args.NAME
+        # NAME=args.NAME
+        sys.stderr.write("******* ConfigData['NAME']: '{}'\n".format(ConfigData['NAME']))
+        sys.stderr.write("******* args.NAME: '{}'\n".format(args.NAME))
+        ConfigData.set("NAME", args.NAME)
+        sys.stderr.write("******* ConfigData['NAME']: '{}'\n".format(ConfigData['NAME']))
     if args.CPU:
         CPU=int(args.CPU)
     if args.mem:
@@ -105,17 +111,17 @@ def main():
         STORE = "LeastUsed"
     if args.GUESTOS:
         GUESTOS=args.GUESTOS
-    if args.VMXOPTS == '' and VMXOPTS != '':
-        VMXOPTS=''
+    if args.VMXOPTS == '' and ConfigData['VMXOPTS'] != '':
+        ConfigData['VMXOPTS']=''
     if args.VMXOPTS and args.VMXOPTS != 'NIL':
-        VMXOPTS=args.VMXOPTS.split(",")
+        ConfigData['VMXOPTS']=args.VMXOPTS.split(",")
 
 
     if args.UPDATE:
         print "Saving new Defaults to ~/.esxi-vm.yml"
-        ConfigData['isDryRun'] = isDryRun
+        # ConfigData['isDryRun'] = isDryRun
         ConfigData['isVerbose'] = isVerbose
-        ConfigData['isSummary'] = isSummary
+        # ConfigData['isSummary'] = isSummary
         ConfigData['HOST'] = HOST
         ConfigData['USER'] = USER
         ConfigData['PASSWORD'] = PASSWORD
@@ -128,9 +134,9 @@ def main():
         ConfigData['NET'] = NET
         ConfigData['ISO'] = ISO
         ConfigData['GUESTOS'] = GUESTOS
-        ConfigData['VMXOPTS'] = VMXOPTS
+        # ConfigData['VMXOPTS'] = VMXOPTS
         SaveConfig(ConfigData)
-        if NAME == "":
+        if ConfigData['NAME'] == "":
             sys.exit(0)
 
     #
@@ -140,7 +146,8 @@ def main():
     LogOutput = Message("{")
     LogOutput += '"datetime":"{}",'.format(str(theCurrDateTime()))
 
-    if NAME == "":
+    sys.stderr.write("******* ConfigData['NAME']: '{}'\n".format(ConfigData['NAME']))
+    if ConfigData['NAME'] == "":
         print "ERROR: Missing required option --name"
         sys.exit(1)
 
@@ -250,11 +257,11 @@ def main():
         # type(stdin)
         for line in stdout.readlines():
             splitLine = line.split()
-            if NAME == splitLine[1]:
+            if ConfigData['NAME'] == splitLine[1]:
                 VMID = splitLine[0]
-                print "ERROR: VM " + NAME + " already exists."
-                # ErrorMessages += " VM " + NAME + " already exists."
-                ErrorMessages += "VM {} already exists.".format(NAME)
+                print "ERROR: VM " + ConfigData['NAME'] + " already exists."
+                # ErrorMessages += " VM " + ConfigData['NAME'] + " already exists."
+                ErrorMessages += "VM {} already exists.".format(ConfigData['NAME'])
                 CheckHasErrors = True
     except:
         e = sys.exc_info()
@@ -316,7 +323,7 @@ def main():
 
     #  Check if DSPATH/NAME aready exists
     try:
-        FullPath = DSPATH + "/" + NAME
+        FullPath = DSPATH + "/" + ConfigData['NAME']
         (stdin, stdout, stderr) = ssh.exec_command("ls -d " + FullPath)
         # type(stdin)
         if stdout.readlines() and not stderr.readlines():
@@ -333,7 +340,7 @@ def main():
     VMX.append('config.version = "8"')
     VMX.append('virtualHW.version = "8"')
     VMX.append('vmci0.present = "TRUE"')
-    VMX.append('displayName = "' + NAME + '"')
+    VMX.append('displayName = "' + ConfigData['NAME'] + '"')
     VMX.append('floppy0.present = "FALSE"')
     VMX.append('numvcpus = "' + str(CPU) + '"')
     VMX.append('scsi0.present = "TRUE"')
@@ -341,7 +348,7 @@ def main():
     VMX.append('scsi0.virtualDev = "pvscsi"')
     VMX.append('memsize = "' + str(MEM * 1024) + '"')
     VMX.append('scsi0:0.present = "TRUE"')
-    VMX.append('scsi0:0.fileName = "' + NAME + '.vmdk"')
+    VMX.append('scsi0:0.fileName = "' + ConfigData['NAME'] + '.vmdk"')
     VMX.append('scsi0:0.deviceType = "scsi-hardDisk"')
     if ISO == "":
         VMX.append('ide1:0.present = "TRUE"')
@@ -379,7 +386,7 @@ def main():
 
     #
     #   Merge extra VMX options
-    for VMXopt in VMXOPTS:
+    for VMXopt in ConfigData['VMXOPTS']:
         try:
             k,v = VMXopt.split("=")
         except:
@@ -400,23 +407,23 @@ def main():
             if key != '' and value != '':
                 VMX.append(key + " = " + value)
 
-    if isVerbose and VMXOPTS != '':
+    if isVerbose and ConfigData['VMXOPTS'] != '':
         print "VMX file:"
         for i in VMX:
             print i
 
-    MyVM = FullPath + "/" + NAME
+    MyVM = FullPath + "/" + ConfigData['NAME']
     if CheckHasErrors:
         Result = "Errors"
     else:
         Result = "Success"
 
-    if not isDryRun and not CheckHasErrors:
+    if not ConfigData['isDryRun'] and not CheckHasErrors:
         try:
 
             # Create NAME.vmx
             if isVerbose:
-                print "Create " + NAME + ".vmx file"
+                print "Create " + ConfigData['NAME'] + ".vmx file"
             (stdin, stdout, stderr) = ssh.exec_command("mkdir " + FullPath )
             # type(stdin)
             for line in VMX:
@@ -425,7 +432,7 @@ def main():
 
             # Create vmdk
             if isVerbose:
-                print "Create " + NAME + ".vmdk file"
+                print "Create " + ConfigData['NAME'] + ".vmdk file"
             #(stdin, stdout, stderr) = ssh.exec_command("vmkfstools -c " + str(HDISK) + "G -d " + DISKFORMAT + " " + MyVM + ".vmdk")
             (stdin, stdout, stderr) = ssh.exec_command("vmkfstools -c " + str(HDISK) + "G -d " +
                                                        DISKFORMAT + " " + MyVM + ".vmdk",
@@ -472,7 +479,7 @@ def main():
     #
     #   The output log string
     LogOutput += '"Host":"' + HOST + '",'
-    LogOutput += '"Name":"' + NAME + '",'
+    LogOutput += '"Name":"' + ConfigData['NAME'] + '",'
     LogOutput += '"CPU":"' + str(CPU) + '",'
     LogOutput += '"Mem":"' + str(MEM) + '",'
     LogOutput += '"Hdisk":"' + str(HDISK) + '",'
@@ -486,29 +493,29 @@ def main():
     LogOutput += '"Guest OS":"' + GUESTOS + '",'
     LogOutput += '"MAC":"' + MACarg + '",'
     LogOutput += '"MAC Used":"' + GeneratedMAC + '",'
-    LogOutput += '"Dry Run":"' + str(isDryRun) + '",'
+    LogOutput += '"Dry Run":"' + str(ConfigData['isDryRun']) + '",'
     LogOutput += '"Verbose":"' + str(isVerbose) + '",'
     if ErrorMessages:
         LogOutput += '"Error Message":"{}",'.format(ErrorMessages)
     LogOutput += '"Result":"' + Result + '",'
     LogOutput += '"Completion Time":"' + str(theCurrDateTime()) + '"'
     LogOutput += '}\n'
-    try:
+    # try:
         # with open(LOG, "a+w") as FD:
         #     FD.write(str(LogOutput))
-        LogOutput.log_to_file(LOG)
-    except:
-        print "Error writing to log file: " + LOG
+    LogOutput.log_to_file(LOG)
+    # except:
+    #     print "Error writing to log file: " + LOG
 
-    if isSummary:
-        if isDryRun:
+    if ConfigData['isSummary']:
+        if ConfigData['isDryRun']:
             print "\nDry Run summary:"
         else:
             print "\nCreate VM Success:"
 
         if isVerbose:
             print "ESXi Host: " + HOST
-        print "VM NAME: " + NAME
+        print "VM NAME: " + ConfigData['NAME']
         print "vCPU: " + str(CPU)
         print "Memory: " + str(MEM) + "GB"
         print "VM Disk: " + str(HDISK) + "GB"
@@ -525,11 +532,11 @@ def main():
         pass
 
     if CheckHasErrors:
-        if isDryRun:
+        if ConfigData['isDryRun']:
             print "Dry Run: Failed."
         sys.exit(1)
     else:
-        if isDryRun:
+        if ConfigData['isDryRun']:
             print "Dry Run: Success."
         else:
             print GeneratedMAC

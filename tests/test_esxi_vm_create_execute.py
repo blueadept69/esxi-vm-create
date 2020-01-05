@@ -7,7 +7,7 @@ import sys
 from esxi_vm_create import main
 from tests.test_esxi_vm_functions import TEST_DATETIME
 from tests import testcases
-from tests.testcases import mock_getitem
+from tests.testcases import mock_getitem, mock_keys
 
 if sys.version_info.major == 2:
     from mock import patch, call, mock_open
@@ -37,6 +37,7 @@ class TestMainPrepare(TestCase):
         testcases.MOCK_GETITEM_LOGFILE = "logfile"
 
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         datetime_patch.now.return_value = TEST_DATETIME
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
@@ -184,6 +185,7 @@ class TestMainPrepare(TestCase):
         testcases.MOCK_GETITEM_LOGFILE = "logfile"
 
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         datetime_patch.now.return_value = TEST_DATETIME
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
@@ -341,6 +343,7 @@ class TestMainPrepare(TestCase):
         testcases.MOCK_GETITEM_LOGFILE = "logfile"
 
         setup_config_patch().__getitem__.side_effect = mock_getitem
+        setup_config_patch().keys.side_effect = mock_keys
         datetime_patch.now.return_value = TEST_DATETIME
         paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
