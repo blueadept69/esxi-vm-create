@@ -224,6 +224,8 @@ def mock_getitem(key):
         return 0
     elif key == 'VMXOPTS':
         return "NIL"
+    elif key == 'NET':
+        return "None"
     elif key == 'LOG':
         return MOCK_GETITEM_LOGFILE
     return ""

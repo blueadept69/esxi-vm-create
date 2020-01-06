@@ -15,7 +15,8 @@ from esxi_vm_functions import setup_config, SaveConfig, theCurrDateTime, Message
 def main():
     #      Defaults and Variable setup
     ConfigData = Config()
-    _config = setup_config()
+    _config = ConfigData.setup_config()
+    # _config = setup_config()
     for _key in _config.keys():
         ConfigData.set(_key, _config[_key])
     ConfigData.set("NAME", "")
@@ -89,10 +90,7 @@ def main():
         PASSWORD=args.PASSWORD
     if args.NAME:
         # NAME=args.NAME
-        sys.stderr.write("******* ConfigData['NAME']: '{}'\n".format(ConfigData['NAME']))
-        sys.stderr.write("******* args.NAME: '{}'\n".format(args.NAME))
         ConfigData.set("NAME", args.NAME)
-        sys.stderr.write("******* ConfigData['NAME']: '{}'\n".format(ConfigData['NAME']))
     if args.CPU:
         CPU=int(args.CPU)
     if args.mem:
@@ -503,7 +501,7 @@ def main():
     # try:
         # with open(LOG, "a+w") as FD:
         #     FD.write(str(LogOutput))
-    LogOutput.log_to_file(LOG)
+    LogOutput.log_to_file(ConfigData['LOG'])
     # except:
     #     print "Error writing to log file: " + LOG
 

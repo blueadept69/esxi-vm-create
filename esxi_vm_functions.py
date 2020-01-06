@@ -6,17 +6,13 @@ import paramiko                   # For remote ssh
 from math import log
 
 
-#
-#
-#   Functions
-#
-#
-
 class Config:
     """ Class to handle program configuration """
 
     def __init__(self):
         self.data = dict()
+        self.homedir = os.path.expanduser("~")
+        self._default_yml_file = "{}/.esxi-vm.yml".format(self.homedir)
 
     def __getitem__(self, key):
         return self.data.get(key)
@@ -25,13 +21,55 @@ class Config:
         self.data[key] = value
 
     def set(self, key, value):
-        sys.stderr.write("******* Config.set(key='{}', value='{}')\n".format(key, value))
         self.data[key] = value
-        sys.stderr.write("******* Config.data: {}\n".format(self.data))
 
     def get(self, key):
         return self.data.get(key)
 
+    def load_config(self, yml_file=None):
+        ret_val = False
+        if not yml_file:
+            yml_file = self._default_yml_file
+        if os.path.exists(yml_file):
+            _yml_config_data = yaml.safe_load(open(yml_file))
+            self.data.update(_yml_config_data)
+            ret_val = True
+        return ret_val
+
+    def setup_config(self):
+        self.set('LOG', self.homedir + "/esxi-vm.log")
+        self.set('isDryRun', False)
+        self.set('isVerbose', False)
+        self.set('isSummary', False)
+        self.set('HOST', "esxi")
+        self.set('USER', "root")
+        self.set('PASSWORD', "")
+        self.set('CPU', 2)
+        self.set('MEM', 4)
+        self.set('HDISK', 20)
+        self.set('DISKFORMAT', "thin")
+        self.set('VIRTDEV', "pvscsi")
+        self.set('STORE', "LeastUsed")
+        self.set('NET', "None")
+        self.set('ISO', "None")
+        self.set('GUESTOS', "centos-64")
+        self.set('VMXOPTS', "")
+        return self.data
+
+    def save_config(self, yml_file=None):
+        ret_val = False
+        if not yml_file:
+            yml_file = self._default_yml_file
+        try:
+            with open(yml_file, 'w') as _fd:
+                yaml.dump(self.data, _fd, default_flow_style=False)
+            _fd.close()
+            ret_val = True
+        except:
+            print "Unable to create/update config file {}".format(yml_file)
+            e = sys.exc_info()
+            print "The Error is {} - {}".format(e[0], e[1])
+        return ret_val
 
 class Message:
     """ Class to handle error messages """
@@ -81,6 +119,11 @@ class Message:
         except Exception as e:
             print "Error writing to log file: {}".format(logfile)
 
+#
+#
+#   Functions
+#
+#
 
 def setup_config():
 

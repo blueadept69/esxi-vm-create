@@ -24,6 +24,7 @@ class TestMainPrepare(TestCase):
     @patch('esxi_vm_create.SaveConfig')
     @patch('esxi_vm_create.setup_config')
     @patch('esxi_vm_create.paramiko')
+    @patch('Message.')
     def test_main_ok_thru_getallvms_dry_true_empty_log(self, paramiko_patch, setup_config_patch,
                                                        saveconfig_patch, print_patch):
         """
@@ -56,17 +57,14 @@ class TestMainPrepare(TestCase):
                 }
             }
         )
-
+        #
+        # import pdb
+        # pdb.set_trace()
         with self.assertRaises(SystemExit):
             main()
         saveconfig_patch.assert_not_called()
         print_patch.assert_has_calls(
-            [call.write("ERROR: Virtual NIC  doesn't exist."),
-             call.write('\n'),
-             call.write("    Available VM NICs: ['Mgmt Temp PG 1', 'Mgmt Temp PG 0', 'VM Network', "
-                        "'Management Network', 'IP over IB PG 1', 'Management Net IB 0', "
-                        "'VM Network 1', 'IP over IB PG 2', 'Management IB Net 1', 'IPoIB Net 0', "
-                        "'Management IB Net 0'] or 'None'"),
+            [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
              call.write('VMX file:'),
              call.write('\n'),
@@ -134,16 +132,6 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('guestOS = "guestosarg"'),
              call.write('\n'),
-             call.write('ethernet0.virtualDev = "vmxnet3"'),
-             call.write('\n'),
-             call.write('ethernet0.present = "TRUE"'),
-             call.write('\n'),
-             call.write('ethernet0.networkName = ""'),
-             call.write('\n'),
-             call.write('ethernet0.addressType = "static"'),
-             call.write('\n'),
-             call.write('ethernet0.address = "12:34:56:78:9a:bc"'),
-             call.write('\n'),
              call.write('vmxoptone = 1'),
              call.write('\n'),
              call.write('Error writing to log file: '),
@@ -164,7 +152,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('DS Store: VM-FreeNAS-ds'),
              call.write('\n'),
-             call.write('Network: '),
+             call.write('Network: None'),
              call.write('\n'),
              call.write('Guest OS: guestosarg'),
              call.write('\n'),
@@ -223,13 +211,6 @@ class TestMainPrepare(TestCase):
              call.write('8192GB Memory out of range. [1-4080].'),
              call.write('\n'),
              call.write('Virtual Disk size 65536GB out of range. [1-63488].'),
-             call.write('\n'),
-             call.write("ERROR: Virtual NIC  doesn't exist."),
-             call.write('\n'),
-             call.write("    Available VM NICs: ['Mgmt Temp PG 1', 'Mgmt Temp PG 0', 'VM Network',"
-                        " 'Management Network', 'IP over IB PG 1', 'Management Net IB 0',"
-                        " 'VM Network 1', 'IP over IB PG 2', 'Management IB Net 1', 'IPoIB Net 0',"
-                        " 'Management IB Net 0'] or 'None'"),
              call.write('\n'),
              call.write('VMX file:'),
              call.write('\n'),
@@ -297,16 +278,6 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('guestOS = "guestosarg"'),
              call.write('\n'),
-             call.write('ethernet0.virtualDev = "vmxnet3"'),
-             call.write('\n'),
-             call.write('ethernet0.present = "TRUE"'),
-             call.write('\n'),
-             call.write('ethernet0.networkName = ""'),
-             call.write('\n'),
-             call.write('ethernet0.addressType = "static"'),
-             call.write('\n'),
-             call.write('ethernet0.address = "12:34:56:78:9a:bc"'),
-             call.write('\n'),
              call.write('vmxoptone = 1'),
              call.write('\n'),
              call.write('Error writing to log file: '),
@@ -327,7 +298,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('DS Store: VM-FreeNAS-ds'),
              call.write('\n'),
-             call.write('Network: '),
+             call.write('Network: None'),
              call.write('\n'),
              call.write('Guest OS: guestosarg'),
              call.write('\n'),
@@ -385,13 +356,6 @@ class TestMainPrepare(TestCase):
              call.write("    Available Disk Stores: ['VM-FreeNAS-ds', 'VM-Kafka', 'VM-Splunk-ds']"),
              call.write('\n'),
              call.write('    LeastUsed Disk Store : VM-FreeNAS-ds'),
-             call.write('\n'),
-             call.write("ERROR: Virtual NIC  doesn't exist."),
-             call.write('\n'),
-             call.write("    Available VM NICs: ['Mgmt Temp PG 1', 'Mgmt Temp PG 0', 'VM Network',"
-                        " 'Management Network', 'IP over IB PG 1', 'Management Net IB 0',"
-                        " 'VM Network 1', 'IP over IB PG 2', 'Management IB Net 1', 'IPoIB Net 0',"
-                        " 'Management IB Net 0'] or 'None'"),
              call.write('\n'),
              call.write('ERROR: ISO /vmfs/volumes/path/to/iso not found.  Use full path to ISO'),
              call.write('\n'),
@@ -457,16 +421,6 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('guestOS = "guestosarg"'),
              call.write('\n'),
-             call.write('ethernet0.virtualDev = "vmxnet3"'),
-             call.write('\n'),
-             call.write('ethernet0.present = "TRUE"'),
-             call.write('\n'),
-             call.write('ethernet0.networkName = ""'),
-             call.write('\n'),
-             call.write('ethernet0.addressType = "static"'),
-             call.write('\n'),
-             call.write('ethernet0.address = "12:34:56:78:9a:bc"'),
-             call.write('\n'),
              call.write('vmxoptone = 1'),
              call.write('\n'),
              call.write('Error writing to log file: '),
@@ -487,7 +441,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('DS Store: '),
              call.write('\n'),
-             call.write('Network: '),
+             call.write('Network: None'),
              call.write('\n'),
              call.write('ISO: /vmfs/volumes/path/to/iso'),
              call.write('\n'),
@@ -547,14 +501,7 @@ class TestMainPrepare(TestCase):
             main()
         saveconfig_patch.assert_not_called()
         print_patch.assert_has_calls(
-            [call.write("ERROR: Virtual NIC  doesn't exist."),
-             call.write('\n'),
-             call.write("    Available VM NICs: ['Mgmt Temp PG 1', 'Mgmt Temp PG 0', 'VM Network',"
-                        " 'Management Network', 'IP over IB PG 1', 'Management Net IB 0',"
-                        " 'VM Network 1', 'IP over IB PG 2', 'Management IB Net 1', 'IPoIB Net 0',"
-                        " 'Management IB Net 0'] or 'None'"),
-             call.write('\n'),
-             call.write('ERROR: ISO /vmfs/volumes/path/to/iso not found.  Use full path to ISO'),
+            [call.write('ERROR: ISO /vmfs/volumes/path/to/iso not found.  Use full path to ISO'),
              call.write('\n'),
              call.write('ERROR: Directory /vmfs/volumes/5d99349b-7d6bc489-9769-d050995bdb9e/'
                         'VM-Splunk-ds already exists.'),
@@ -624,16 +571,6 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('guestOS = "guestosarg"'),
              call.write('\n'),
-             call.write('ethernet0.virtualDev = "vmxnet3"'),
-             call.write('\n'),
-             call.write('ethernet0.present = "TRUE"'),
-             call.write('\n'),
-             call.write('ethernet0.networkName = ""'),
-             call.write('\n'),
-             call.write('ethernet0.addressType = "static"'),
-             call.write('\n'),
-             call.write('ethernet0.address = "12:34:56:78:9a:bc"'),
-             call.write('\n'),
              call.write('Error writing to log file: '),
              call.write('\n'),
              call.write('\nDry Run summary:'),
@@ -652,7 +589,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('DS Store: VM-Splunk-ds'),
              call.write('\n'),
-             call.write('Network: '),
+             call.write('Network: None'),
              call.write('\n'),
              call.write('ISO: /vmfs/volumes/path/to/iso'),
              call.write('\n'),
