@@ -19,14 +19,22 @@ class TestMainPrepare(TestCase):
 
     testcases.MOCK_GETITEM_LOGFILE = ""
 
-    @patch('sys.stdout')
+    def setUp(self):
+        print_patcher = patch('sys.stdout')
+        log_patcher = patch('esxi_vm_create.Message.log_to_file')
+        self.print_patch = print_patcher.start()
+        self.log_patch = log_patcher.start()
+        self.addCleanup(print_patcher.stop)
+        self.addCleanup(log_patcher.stop)
+
+    # @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE_NO_ISO_AND_NET)
     @patch('esxi_vm_create.SaveConfig')
     @patch('esxi_vm_create.setup_config')
     @patch('esxi_vm_create.paramiko')
-    @patch('Message.')
     def test_main_ok_thru_getallvms_dry_true_empty_log(self, paramiko_patch, setup_config_patch,
-                                                       saveconfig_patch, print_patch):
+                                                       # saveconfig_patch, print_patch):
+                                                       saveconfig_patch):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
@@ -63,7 +71,7 @@ class TestMainPrepare(TestCase):
         with self.assertRaises(SystemExit):
             main()
         saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
              call.write('VMX file:'),
@@ -134,8 +142,6 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('vmxoptone = 1'),
              call.write('\n'),
-             call.write('Error writing to log file: '),
-             call.write('\n'),
              call.write('\nDry Run summary:'),
              call.write('\n'),
              call.write('ESXi Host: hostarg'),
@@ -148,7 +154,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('VM Disk: 999GB'),
              call.write('\n'),
-             call.write('Format: '),
+             call.write('Format: thin'),
              call.write('\n'),
              call.write('DS Store: VM-FreeNAS-ds'),
              call.write('\n'),
@@ -161,13 +167,14 @@ class TestMainPrepare(TestCase):
              call.write('Dry Run: Failed.'),
              call.write('\n')])
 
-    @patch('sys.stdout')
+    # @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_PLUS_BAD_CPU_MEM_HDISK)
     @patch('esxi_vm_create.SaveConfig')
     @patch('esxi_vm_create.setup_config')
     @patch('esxi_vm_create.paramiko')
     def test_main_bad_cpu_mem_and_hdisk(self, paramiko_patch, setup_config_patch,
-                                        saveconfig_patch, print_patch):
+                                        # saveconfig_patch, print_patch):
+                                        saveconfig_patch):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
@@ -203,7 +210,7 @@ class TestMainPrepare(TestCase):
         with self.assertRaises(SystemExit):
             main()
         saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
              call.write('129 CPU out of range. [1-128].'),
@@ -280,8 +287,6 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('vmxoptone = 1'),
              call.write('\n'),
-             call.write('Error writing to log file: '),
-             call.write('\n'),
              call.write('\nDry Run summary:'),
              call.write('\n'),
              call.write('ESXi Host: hostarg'),
@@ -294,7 +299,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('VM Disk: 65536GB'),
              call.write('\n'),
-             call.write('Format: '),
+             call.write('Format: thin'),
              call.write('\n'),
              call.write('DS Store: VM-FreeNAS-ds'),
              call.write('\n'),
@@ -307,13 +312,14 @@ class TestMainPrepare(TestCase):
              call.write('Dry Run: Failed.'),
              call.write('\n')])
 
-    @patch('sys.stdout')
+    # @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_PLUS_BAD_DSSTORE_ISO)
     @patch('esxi_vm_create.SaveConfig')
     @patch('esxi_vm_create.setup_config')
     @patch('esxi_vm_create.paramiko')
     def test_main_bad_dsstore_and_iso(self, paramiko_patch, setup_config_patch,
-                                      saveconfig_patch, print_patch):
+                                      # saveconfig_patch, print_patch):
+                                      saveconfig_patch):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
@@ -348,7 +354,7 @@ class TestMainPrepare(TestCase):
         with self.assertRaises(SystemExit):
             main()
         saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
              call.write("ERROR: Disk Storage badstore doesn't exist. "),
@@ -423,8 +429,6 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('vmxoptone = 1'),
              call.write('\n'),
-             call.write('Error writing to log file: '),
-             call.write('\n'),
              call.write('\nDry Run summary:'),
              call.write('\n'),
              call.write('ESXi Host: hostarg'),
@@ -437,7 +441,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('VM Disk: 999GB'),
              call.write('\n'),
-             call.write('Format: '),
+             call.write('Format: thin'),
              call.write('\n'),
              call.write('DS Store: '),
              call.write('\n'),
@@ -452,13 +456,14 @@ class TestMainPrepare(TestCase):
              call.write('Dry Run: Failed.'),
              call.write('\n')])
 
-    @patch('sys.stdout')
+    # @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_PLUS_EXIST_DSSTORE_CPUS7)
     @patch('esxi_vm_create.SaveConfig')
     @patch('esxi_vm_create.setup_config')
     @patch('esxi_vm_create.paramiko')
     def test_main_dspath_name_exists(self, paramiko_patch, setup_config_patch,
-                                     saveconfig_patch, print_patch):
+                                     # saveconfig_patch, print_patch):
+                                     saveconfig_patch):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
@@ -500,7 +505,7 @@ class TestMainPrepare(TestCase):
         with self.assertRaises(SystemExit):
             main()
         saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.print_patch.assert_has_calls(
             [call.write('ERROR: ISO /vmfs/volumes/path/to/iso not found.  Use full path to ISO'),
              call.write('\n'),
              call.write('ERROR: Directory /vmfs/volumes/5d99349b-7d6bc489-9769-d050995bdb9e/'
@@ -571,8 +576,6 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('guestOS = "guestosarg"'),
              call.write('\n'),
-             call.write('Error writing to log file: '),
-             call.write('\n'),
              call.write('\nDry Run summary:'),
              call.write('\n'),
              call.write('ESXi Host: hostarg'),
@@ -585,7 +588,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('VM Disk: 999GB'),
              call.write('\n'),
-             call.write('Format: '),
+             call.write('Format: thin'),
              call.write('\n'),
              call.write('DS Store: VM-Splunk-ds'),
              call.write('\n'),
