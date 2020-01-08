@@ -19,92 +19,92 @@ class TestMainInitial(TestCase):
 
     testcases.MOCK_GETITEM_LOGFILE = ""
 
-    @patch('sys.stdout')
+    def setUp(self):
+
+        print_patcher = patch('sys.stdout')
+        saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        paramiko_patcher = patch('esxi_vm_create.paramiko')
+        setup_config_patcher = patch('esxi_vm_create.setup_config')
+
+        self.print_patch = print_patcher.start()
+        self.saveconfig_patch = saveconfig_patcher.start()
+        self.paramiko_patch = paramiko_patcher.start()
+        self.setup_config_patch = setup_config_patcher.start()
+
+        self.paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
+        self.setup_config_patch().__getitem__.side_effect = mock_getitem
+        self.setup_config_patch().keys.side_effect = mock_keys
+
+        self.addCleanup(print_patcher.stop)
+        self.addCleanup(saveconfig_patcher.stop)
+        self.addCleanup(paramiko_patcher.stop)
+        self.addCleanup(setup_config_patcher.stop)
+
     @patch('sys.argv', ['esxi_vm_create.py', '-h'])
-    @patch('esxi_vm_create.setup_config')
-    def test_main_help(self, setup_config_patch, print_patch):
+    def test_main_help(self):
         """ Test mocking -h option passing if sys.exit called. """
         sys.stderr.write("=========> IN: test_main_help\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
         with self.assertRaises(SystemExit):
             main()
-        setup_config_patch.assert_called_with()
-        self.assertIn("usage", str(print_patch.method_calls))
+        self.setup_config_patch.assert_called_with()
+        self.assertIn("usage", str(self.print_patch.method_calls))
 
 
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_NAME_UPDATEDEFAULTS)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    def test_main_update_conf_no_name(self, setup_config_patch, saveconfig_patch, print_patch):
+    def test_main_update_conf_no_name(self):
         """ Test mocking a call with --updateDefaults and no --name provided,
         looking for sys.exit call. """
         sys.stderr.write("=========> IN: test_main_update_conf_no_name\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
         with self.assertRaises(SystemExit):
             main()
-        setup_config_patch.assert_called_with()
-        saveconfig_patch.assert_called_once()
-        print_patch.assert_has_calls(
+        self.setup_config_patch.assert_called_with()
+        self.saveconfig_patch.assert_called_once()
+        self.print_patch.assert_has_calls(
             [call.write('Saving new Defaults to ~/.esxi-vm.yml'), call.write('\n')])
 
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_NAME_STORE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    def test_main_no_update_no_name(self, setup_config_patch, saveconfig_patch, print_patch):
+    def test_main_no_update_no_name(self):
         """
         Test mocking call with no --update called and no --name called.
         """
         sys.stderr.write("=========> IN: test_main_no_update_no_name\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write('ERROR: Missing required option --name'), call.write('\n')])
 
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_start_ssh(self, paramiko_patch, setup_config_patch,
-                            saveconfig_patch, print_patch):
+    def test_main_start_ssh(self):
         """
         Test mocking with --name and mocking ssh calls raise exception and test except code.
         """
         sys.stderr.write("=========> IN: test_main_start_ssh\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command.side_effect = Exception("TestExcept")
+        testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
+        testcases.SSH_CONDITIONS.update(
+            {
+                "esxcli system version get |grep Version": {
+                    'Exception': 'TestExcept',
+                }
+            }
+        )
+
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestExcept"),
              call.write('\n'),
              call.write('Unable to access ESXi Host: hostarg, username: userarg'),
              call.write('\n')])
 
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_esxcli_version_fail(self, paramiko_patch, setup_config_patch,
-                                      saveconfig_patch, print_patch):
+    def test_main_esxcli_version_fail(self):
         """
         Test mocking with --name and mocking ssh calls returning None to esxcli call to test
         handling of bad result.
         """
         sys.stderr.write("=========> IN: test_main_esxcli_version_fail\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -117,8 +117,8 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write('Unable to determine if this is a ESXi Host: hostarg, username: userarg'),
              call.write('\n'),
              call.write("The Error is <type 'exceptions.SystemExit'> - 1"),
@@ -126,13 +126,8 @@ class TestMainInitial(TestCase):
              call.write('Unable to access ESXi Host: hostarg, username: userarg'),
              call.write('\n')])
 
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_esxcli_volume_fail(self, paramiko_patch, setup_config_patch,
-                                     saveconfig_patch, print_patch):
+    def test_main_esxcli_volume_fail(self):
         """
         Test mocking with --name and mocking ssh calls returning "valid" version but raising
         exception reading from volume list to test exception handling.
@@ -143,9 +138,6 @@ class TestMainInitial(TestCase):
 
         """
         sys.stderr.write("=========> IN: test_main_esxcli_volume_fail\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -158,26 +150,19 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestVolumeFail"),
              call.write('\n')])
 
-    @patch('sys.stdout')
+
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_esxcli_portgroups_fail(self, paramiko_patch, setup_config_patch,
-                                         saveconfig_patch, print_patch):
+    def test_main_esxcli_portgroups_fail(self):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See above) and
         valid volume list, raising exception on run of esxcli command for portgroups list.
         """
         sys.stderr.write("=========> IN: test_main_esxcli_portgroups_fail\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -191,26 +176,18 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestPortgroupFail"),
              call.write('\n')])
 
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_find_iso_fail_mac1(self, paramiko_patch, setup_config_patch,
-                                     saveconfig_patch, print_patch):
+    def test_main_find_iso_fail_mac1(self):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See above) and
         valid volume list and PGs and MAC, raising exception on run of find command for ISO file.
         """
         sys.stderr.write("=========> IN: test_main_find_iso_fail_mac1\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -224,26 +201,18 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestFindISOFail"),
              call.write('\n')])
 
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE_BAD_MAC)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_find_iso_fail_mac2(self, paramiko_patch, setup_config_patch,
-                                     saveconfig_patch, print_patch):
+    def test_main_find_iso_fail_mac2(self):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See above) and
         valid volume list and PGs and MAC, raising exception on run of find command for ISO file.
         """
         sys.stderr.write("=========> IN: test_main_find_iso_fail_mac2\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -257,26 +226,18 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestFindISOFail"),
              call.write('\n')])
 
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_ok_find_iso_fail_getallvms(self, paramiko_patch, setup_config_patch,
-                                             saveconfig_patch, print_patch):
+    def test_main_ok_find_iso_fail_getallvms(self):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See above) and
         valid volume list and PGs and MAC, raising exception on run of find command for ISO file.
         """
         sys.stderr.write("=========> IN: test_main_ok_find_iso_fail_getallvms\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -289,8 +250,8 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write('FoundISOPath: /vmfs/volumes/test/ISOs/isoarg'),
              call.write('\n'),
              call.write("The Error is <type 'exceptions.Exception'> - TEST_GETALLVMS_FAIL"),

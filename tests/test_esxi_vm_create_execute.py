@@ -18,28 +18,45 @@ else:
 class TestMainPrepare(TestCase):
     """ Test main() function after initial work and preparing for changes. """
 
-    @patch('datetime.datetime')
-    @patch('sys.stdout')
+    def setUp(self):
+        MOCK_GETITEM_LOGFILE = "logfile"
+
+        print_patcher = patch('sys.stdout')
+        saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        paramiko_patcher = patch('esxi_vm_create.paramiko')
+        setup_config_patcher = patch('esxi_vm_create.setup_config')
+        datetime_patcher = patch('datetime.datetime')
+        logfile_patcher = patch('esxi_vm_create.Config.logfile')
+
+        self.print_patch = print_patcher.start()
+        self.saveconfig_patch = saveconfig_patcher.start()
+        self.paramiko_patch = paramiko_patcher.start()
+        self.setup_config_patch = setup_config_patcher.start()
+        self.datetime_patch = datetime_patcher.start()
+        self.logfile_patch = logfile_patcher.start()
+
+        self.paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
+        self.setup_config_patch().__getitem__.side_effect = mock_getitem
+        self.setup_config_patch().keys.side_effect = mock_keys
+        self.datetime_patch.now.return_value = TEST_DATETIME
+        self.logfile_patch.return_value = MOCK_GETITEM_LOGFILE
+
+        self.addCleanup(print_patcher.stop)
+        self.addCleanup(saveconfig_patcher.stop)
+        self.addCleanup(paramiko_patcher.stop)
+        self.addCleanup(setup_config_patcher.stop)
+        self.addCleanup(datetime_patcher.stop)
+        self.addCleanup(logfile_patcher.stop)
+
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE_MAC_ISO_NONE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
     @patch('__builtin__.open', new_callable=mock_open)
-    def test_main_ok_prep_mocked_log(self, *args):
+    def test_main_ok_prep_mocked_log(self, open_patch):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
         """
-        (open_patch, paramiko_patch, setup_config_patch,
-         saveconfig_patch, print_patch, datetime_patch) = args
-
         sys.stderr.write("=========> IN: test_main_ok_prep_mocked_log\n")
         testcases.MOCK_GETITEM_LOGFILE = "logfile"
-
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        datetime_patch.now.return_value = TEST_DATETIME
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
 
@@ -51,8 +68,8 @@ class TestMainPrepare(TestCase):
              call().__enter__(),
              call().write('{"datetime":"2019-12-08T21:30:09.031532",'
                           '"Host":"hostarg","Name":"namearg",'
-                          '"CPU":"9","Mem":"99","Hdisk":"999","DiskFormat":"","Virtual Device":"",'
-                          '"Store":"VM-FreeNAS-ds",'
+                          '"CPU":"9","Mem":"99","Hdisk":"999","DiskFormat":"thin",'
+                          '"Virtual Device":"pvscsi","Store":"VM-FreeNAS-ds",'
                           '"Store Used":"/vmfs/volumes/5c2125df-7d95f6bd-1be1-001517d9a462",'
                           '"Network":"VM Network","ISO":"None","ISO used":"",'
                           '"Guest OS":"guestosarg","MAC":"","MAC Used":"",'
@@ -60,8 +77,8 @@ class TestMainPrepare(TestCase):
                           '"Result":"Success",'
                           '"Completion Time":"2019-12-08T21:30:09.031532"}\n'),
              call().__exit__(None, None, None)])
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write('VMX file:'),
              call.write('\n'),
              call.write('config.version = "8"'),
@@ -150,7 +167,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('VM Disk: 999GB'),
              call.write('\n'),
-             call.write('Format: '),
+             call.write('Format: thin'),
              call.write('\n'),
              call.write('DS Store: VM-FreeNAS-ds'),
              call.write('\n'),
@@ -166,28 +183,15 @@ class TestMainPrepare(TestCase):
     ###########################
     # By rights, the execution this test is testing should fail since disk format is being passed
     # as empty string...
-    @patch('datetime.datetime')
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_EMPTY_STORE_ISO_NONE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
     @patch('__builtin__.open', new_callable=mock_open)
-    def test_main_ok_execute_mocked_log(self, *args):
+    def test_main_ok_execute_mocked_log(self, open_patch):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
         """
-        (open_patch, paramiko_patch, setup_config_patch,
-         saveconfig_patch, print_patch, datetime_patch) = args
-
         sys.stderr.write("=========> IN: test_main_ok_prep_mocked_log\n")
         testcases.MOCK_GETITEM_LOGFILE = "logfile"
-
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        datetime_patch.now.return_value = TEST_DATETIME
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
 
@@ -199,18 +203,18 @@ class TestMainPrepare(TestCase):
              call().__enter__(),
              call().write('{"datetime":"2019-12-08T21:30:09.031532",'
                           '"Host":"hostarg","Name":"namearg",'
-                          '"CPU":"9","Mem":"99","Hdisk":"999","DiskFormat":"","Virtual Device":"",'
-                          '"Store":"VM-FreeNAS-ds",'
+                          '"CPU":"9","Mem":"99","Hdisk":"999","DiskFormat":"thin",'
+                          '"Virtual Device":"pvscsi","Store":"VM-FreeNAS-ds",'
                           '"Store Used":"/vmfs/volumes/5c2125df-7d95f6bd-1be1-001517d9a462",'
                           '"Network":"VM Network","ISO":"None","ISO used":"",'
                           '"Guest OS":"guestosarg","MAC":"12:34:56:78:9a:bc",'
                           # ***** NOTE **** Why is MAC Used different from MAC?????
-                          '"MAC Used":"00:0c:29:e3:f9:8e","Dry Run":"","Verbose":"True",'
+                          '"MAC Used":"00:0c:29:e3:f9:8e","Dry Run":"False","Verbose":"True",'
                           '"Result":"Fail",'
                           '"Completion Time":"2019-12-08T21:30:09.031532"}\n'),
              call().__exit__(None, None, None)])
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write('VMX file:'),
              call.write('\n'),
              call.write('config.version = "8"'),
@@ -293,6 +297,8 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('Create namearg.vmdk file'),
              call.write('\n'),
+             call.write('Create: 100% done.'),
+             call.write('\n'),
              call.write('Register VM'),
              call.write('\n'),
              call.write('Power ON VM'),
@@ -311,7 +317,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('VM Disk: 999GB'),
              call.write('\n'),
-             call.write('Format: '),
+             call.write('Format: thin'),
              call.write('\n'),
              call.write('DS Store: VM-FreeNAS-ds'),
              call.write('\n'),
@@ -324,28 +330,15 @@ class TestMainPrepare(TestCase):
              call.write('00:0c:29:e3:f9:8e'),
              call.write('\n')])
 
-    @patch('datetime.datetime')
-    @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_EMPTY_STORE_ISO_NONE)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
     @patch('__builtin__.open', new_callable=mock_open)
-    def test_main_ok_execute_exception(self, *args):
+    def test_main_ok_execute_exception(self, open_patch):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
         """
-        (open_patch, paramiko_patch, setup_config_patch,
-         saveconfig_patch, print_patch, datetime_patch) = args
-
         sys.stderr.write("=========> IN: test_main_ok_prep_mocked_log\n")
         testcases.MOCK_GETITEM_LOGFILE = "logfile"
-
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        datetime_patch.now.return_value = TEST_DATETIME
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -364,19 +357,19 @@ class TestMainPrepare(TestCase):
              call().__enter__(),
              call().write('{"datetime":"2019-12-08T21:30:09.031532",'
                           '"Host":"hostarg","Name":"namearg",'
-                          '"CPU":"9","Mem":"99","Hdisk":"999","DiskFormat":"","Virtual Device":"",'
-                          '"Store":"VM-FreeNAS-ds",'
+                          '"CPU":"9","Mem":"99","Hdisk":"999","DiskFormat":"thin",'
+                          '"Virtual Device":"pvscsi","Store":"VM-FreeNAS-ds",'
                           '"Store Used":"/vmfs/volumes/5c2125df-7d95f6bd-1be1-001517d9a462",'
                           '"Network":"VM Network","ISO":"None","ISO used":"",'
                           '"Guest OS":"guestosarg","MAC":"12:34:56:78:9a:bc",'
                           # ***** NOTE **** Why is MAC Used different from MAC?????
-                          '"MAC Used":"","Dry Run":"","Verbose":"True",'
+                          '"MAC Used":"","Dry Run":"False","Verbose":"True",'
                           '"Error Message":"There was an error creating the VM.",'
                           '"Result":"Fail",'
                           '"Completion Time":"2019-12-08T21:30:09.031532"}\n'),
              call().__exit__(None, None, None)])
-        saveconfig_patch.assert_not_called()
-        print_patch.assert_has_calls(
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
             [call.write('VMX file:'),
              call.write('\n'),
              call.write('config.version = "8"'),
@@ -473,7 +466,7 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('VM Disk: 999GB'),
              call.write('\n'),
-             call.write('Format: '),
+             call.write('Format: thin'),
              call.write('\n'),
              call.write('DS Store: VM-FreeNAS-ds'),
              call.write('\n'),

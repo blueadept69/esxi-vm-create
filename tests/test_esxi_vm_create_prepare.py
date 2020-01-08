@@ -20,29 +20,37 @@ class TestMainPrepare(TestCase):
     testcases.MOCK_GETITEM_LOGFILE = ""
 
     def setUp(self):
+
         print_patcher = patch('sys.stdout')
         log_patcher = patch('esxi_vm_create.Message.log_to_file')
+        saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        paramiko_patcher = patch('esxi_vm_create.paramiko')
+        setup_config_patcher = patch('esxi_vm_create.setup_config')
+
         self.print_patch = print_patcher.start()
         self.log_patch = log_patcher.start()
+        self.saveconfig_patch = saveconfig_patcher.start()
+        self.paramiko_patch = paramiko_patcher.start()
+        self.setup_config_patch = setup_config_patcher.start()
+
+        self.paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
+        self.setup_config_patch().__getitem__.side_effect = mock_getitem
+        self.setup_config_patch().keys.side_effect = mock_keys
+
         self.addCleanup(print_patcher.stop)
         self.addCleanup(log_patcher.stop)
+        self.addCleanup(saveconfig_patcher.stop)
+        self.addCleanup(paramiko_patcher.stop)
+        self.addCleanup(setup_config_patcher.stop)
 
-    # @patch('sys.stdout')
+
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE_NO_ISO_AND_NET)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_ok_thru_getallvms_dry_true_empty_log(self, paramiko_patch, setup_config_patch,
-                                                       # saveconfig_patch, print_patch):
-                                                       saveconfig_patch):
+    def test_main_ok_thru_getallvms_dry_true_empty_log(self):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
         """
         sys.stderr.write("=========> IN: test_main_ok_thru_getallvms_dry_true_empty_log\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -65,12 +73,10 @@ class TestMainPrepare(TestCase):
                 }
             }
         )
-        #
-        # import pdb
-        # pdb.set_trace()
+
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
+        self.saveconfig_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
@@ -167,23 +173,14 @@ class TestMainPrepare(TestCase):
              call.write('Dry Run: Failed.'),
              call.write('\n')])
 
-    # @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_PLUS_BAD_CPU_MEM_HDISK)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_bad_cpu_mem_and_hdisk(self, paramiko_patch, setup_config_patch,
-                                        # saveconfig_patch, print_patch):
-                                        saveconfig_patch):
+    def test_main_bad_cpu_mem_and_hdisk(self):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
         """
         sys.stderr.write("=========> IN: test_main_bad_cpu_mem_and_hdisk\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
         testcases.MOCK_GETITEM_LOGFILE = ""
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -209,7 +206,7 @@ class TestMainPrepare(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
+        self.saveconfig_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
@@ -312,22 +309,13 @@ class TestMainPrepare(TestCase):
              call.write('Dry Run: Failed.'),
              call.write('\n')])
 
-    # @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_PLUS_BAD_DSSTORE_ISO)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_bad_dsstore_and_iso(self, paramiko_patch, setup_config_patch,
-                                      # saveconfig_patch, print_patch):
-                                      saveconfig_patch):
+    def test_main_bad_dsstore_and_iso(self):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
         """
         sys.stderr.write("=========> IN: test_main_bad_dsstore_and_iso\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -353,7 +341,7 @@ class TestMainPrepare(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
+        self.saveconfig_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
@@ -456,22 +444,13 @@ class TestMainPrepare(TestCase):
              call.write('Dry Run: Failed.'),
              call.write('\n')])
 
-    # @patch('sys.stdout')
     @patch('sys.argv', testcases.TEST_ARGV_PLUS_EXIST_DSSTORE_CPUS7)
-    @patch('esxi_vm_create.SaveConfig')
-    @patch('esxi_vm_create.setup_config')
-    @patch('esxi_vm_create.paramiko')
-    def test_main_dspath_name_exists(self, paramiko_patch, setup_config_patch,
-                                     # saveconfig_patch, print_patch):
-                                     saveconfig_patch):
+    def test_main_dspath_name_exists(self):
         """
         Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
         valid info discovery - set to run as dry run.
         """
         sys.stderr.write("=========> IN: test_main_dspath_name_exists\n")
-        setup_config_patch().__getitem__.side_effect = mock_getitem
-        setup_config_patch().keys.side_effect = mock_keys
-        paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
 
         testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
         testcases.SSH_CONDITIONS.update(
@@ -504,7 +483,7 @@ class TestMainPrepare(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        saveconfig_patch.assert_not_called()
+        self.saveconfig_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: ISO /vmfs/volumes/path/to/iso not found.  Use full path to ISO'),
              call.write('\n'),

@@ -36,8 +36,13 @@ class Config:
             ret_val = True
         return ret_val
 
+    def logfile(self):
+        logfile = "{}/esxi-vm.log".format(self.homedir)
+        return logfile
+
     def setup_config(self):
-        self.set('LOG', self.homedir + "/esxi-vm.log")
+        self.logfile()
+        self.set('LOG', self.logfile())
         self.set('isDryRun', False)
         self.set('isVerbose', False)
         self.set('isSummary', False)
