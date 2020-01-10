@@ -144,7 +144,6 @@ def main():
     LogOutput = Message("{")
     LogOutput += '"datetime":"{}",'.format(str(theCurrDateTime()))
 
-    sys.stderr.write("******* ConfigData['NAME']: '{}'\n".format(ConfigData['NAME']))
     if ConfigData['NAME'] == "":
         print "ERROR: Missing required option --name"
         sys.exit(1)

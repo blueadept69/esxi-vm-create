@@ -7,6 +7,7 @@ import sys
 import datetime
 
 from esxi_vm_functions import setup_config, SaveConfig, theCurrDateTime, float2human, Message
+from esxi_vm_functions import Config
 
 if sys.version_info.major == 2:
     from mock import patch, mock_open, call
@@ -30,7 +31,7 @@ EXPECTED_DEFAULT_CONFIGDATA = {'HDISK': 20,
                                'MEM': 4,
                                'isSummary': False,
                                'USER': 'root'
-                               }
+                              }
 
 TEST_ESXI_VM_YML = """CPU: 9
 DISKFORMAT: thick
@@ -68,7 +69,7 @@ GOOD_YML_TEST_CONFIGDATA = {'HDISK': 42,
                             'MEM': 6,
                             'isSummary': True,
                             'USER': 'test-user'
-                            }
+                           }
 
 TEST_DATETIME = datetime.datetime(2019, 12, 8, 21, 30, 9, 31532)
 
@@ -154,7 +155,7 @@ class TestSaveConfig(TestCase):
              call.write('\n'),
              call.write("The Error is <type 'exceptions.Exception'> - TestSaveConfigExcept"),
              call.write('\n')
-             ])
+            ])
 
 
 class TestTheCurrDateTime(TestCase):
@@ -187,15 +188,163 @@ class TestFloat2human(TestCase):
         self.assertEqual("4 kB", ret_val)
 
 
-class TestErrorMessage(TestCase):
+class TestConfig(TestCase):
+    """ Unit tests for Config class """
+
+    def setUp(self):
+        """ Setup object and patches before tests """
+        expanduser_patcher = patch('os.path.expanduser')
+
+        self.expanduser_patch = expanduser_patcher.start()
+
+        self.expanduser_patch.return_value = "mockhome"
+
+        self.addCleanup(expanduser_patcher.stop)
+
+        self.test_obj = Config()
+
+    def test_set(self):
+        """ Test Config.set """
+        self.test_obj.set('test_set', 'test_set_value')
+        self.assertEqual('test_set_value', self.test_obj.data.get('test_set'))
+
+    def test_get(self):
+        """ Test Config.get """
+        self.test_obj.data['test_get'] = 'test_get_value'
+        self.assertEqual('test_get_value', self.test_obj.get('test_get'))
+
+    @patch('os.path.exists', return_value=False)
+    def test_load_config_bad_yml_given(self, path_exists_patch):
+        """ Test Config.load_config with file existing being mock'ed to False """
+        self.assertFalse(self.test_obj.load_config(yml_file="testfile"))
+        path_exists_patch.assert_called_once()
+
+    @patch('yaml.safe_load', return_value={'load_config_test': 'load_config_test_value'})
+    @patch('__builtin__.open')
+    @patch('os.path.exists', return_value=True)
+    def test_load_config_good_default_yml(self, path_exists_patch, open_patch,
+                                          yaml_safe_load_patch):
+        """ Test Config.load_config with file existing mock'ed to True, file open being
+        patched, and yaml load mock'ing dict return. """
+        self.assertTrue(self.test_obj.load_config())
+        self.assertEqual('load_config_test_value', self.test_obj.data.get('load_config_test'))
+        self.assertListEqual([call('mockhome/.esxi-vm.yml')], path_exists_patch.mock_calls)
+        self.assertListEqual([call('mockhome/.esxi-vm.yml')], open_patch.mock_calls)
+        yaml_safe_load_patch.assert_called_once()
+
+    def test_logfile(self):
+        """ Test Config.logfie """
+        self.assertEqual("mockhome/esxi-vm.log", self.test_obj.logfile())
+
+    def test_setup_config(self):
+        """ Test Config.setup_config sets up object with expected defaults """
+        ret_dict = self.test_obj.setup_config()
+        self.assertDictEqual(
+            {
+                'CPU': 2,
+                'DISKFORMAT': 'thin',
+                'GUESTOS': 'centos-64',
+                'HDISK': 20,
+                'HOST': 'esxi',
+                'ISO': 'None',
+                'LOG': 'mockhome/esxi-vm.log',
+                'MEM': 4,
+                'NET': 'None',
+                'PASSWORD': '',
+                'STORE': 'LeastUsed',
+                'USER': 'root',
+                'VIRTDEV': 'pvscsi',
+                'VMXOPTS': '',
+                'isDryRun': False,
+                'isSummary': False,
+                'isVerbose': False
+            }, ret_dict)
+
+    @patch('__builtin__.open', side_effect=Exception("Test_Setup_Config Except"))
+    def test_save_config_except(self, open_patch):
+        """ Test Config.save_config mock'ing file open to Raise exception """
+        self.assertFalse(self.test_obj.save_config())
+        open_patch.assert_has_calls([call('mockhome/.esxi-vm.yml', 'w')])
+
+    @patch('__builtin__.open', new_callable=mock_open)
+    def test_save_config_good(self, open_patch):
+        """ Test Config.save_config with file open being patched and testing expected calls """
+        self.test_obj.data = {"test_save_config": "test_save_config_value"}
+        self.assertTrue(self.test_obj.save_config())
+        open_patch.assert_has_calls([call('mockhome/.esxi-vm.yml', 'w'),
+                                     call().__enter__(),
+                                     call().encoding.__nonzero__(),
+                                     call().write(u'test_save_config'),
+                                     call().write(u':'),
+                                     call().write(u' '),
+                                     call().write(u'test_save_config_value'),
+                                     call().write(u'\n'),
+                                     call().flush(),
+                                     call().flush(),
+                                     call().__exit__(None, None, None),
+                                     call().close()])
+
+
+class TestMessage(TestCase):
+    """ Unit tests for Message class """
+
+    def setUp(self):
+        """ Setup object and patches before testing """
+        self.test_obj = Message()
+
+        print_patcher = patch('sys.stdout')
+        open_patcher = patch('__builtin__.open')
+
+        self.print_patch = print_patcher.start()
+        self.open_patch = open_patcher.start()
+
+        self.open_patch.new_callable = mock_open
+
+        self.addCleanup(print_patcher.stop)
+        self.addCleanup(open_patcher.stop)
+
+    def test_tty_print(self):
+        """ Test Message.tty_print """
+        self.test_obj.messages = "Test print message."
+        self.test_obj.tty_print()
+        self.print_patch.assert_has_calls([call.write('Test print message.'), call.write('\n')])
+
+    def test_log_to_file_except(self):
+        """ Test Message.log_to_file with open being mock'ed to return IOError """
+        self.open_patch.side_effect = IOError
+        self.test_obj.messages = "Should Not See"
+        self.test_obj.log_to_file(logfile="BadFile")
+        self.assertListEqual(
+            [call.write('Error writing to log file: BadFile'), call.write('\n')],
+            self.print_patch.mock_calls
+        )
+
+    def test_log_to_file_ok(self):
+        """ Test Message.log_to_file clearing open mock side_effect and testing called OK """
+        if 'side_effect' in self.open_patch:
+            del self.open_patch.side_effect
+        self.test_obj.messages = "Test Log Message"
+        self.test_obj.log_to_file(logfile="OKLogFile")
+
+        self.assertListEqual([], self.print_patch.mock_calls)
+        self.open_patch.assert_has_calls(
+            [call('OKLogFile', 'a+w'),
+             call().__enter__(),
+             call().__enter__().write('Test Log Message'),
+             call().__exit__(None, None, None)
+            ])
+        self.assertEqual(5, len(self.open_patch.mock_calls))
+
     def test_add(self):
-        test_obj = Message()
-        test_obj.messages = "Seed message."
-        test_obj += "Test Message 1."
-        test_obj = test_obj + "Test Message 2."
-        self.assertEqual("Seed message. Test Message 1. Test Message 2.", test_obj.messages)
+        """ Test Message.add """
+        self.test_obj.messages = ""
+        self.test_obj += "Test First Message."
+        self.test_obj = self.test_obj + "Test Second Message With Comma,"
+        self.test_obj += "Test Third Message."
+        self.assertEqual("Test First Message. Test Second Message With Comma,Test Third Message.",
+                         self.test_obj.messages)
 
     def test_show(self):
-        test_obj = Message()
-        test_obj.messages = "test_show test message"
-        self.assertEqual("test_show test message", test_obj.show())
+        """ Test Message.show """
+        self.test_obj.messages = "test_show test message"
+        self.assertEqual("test_show test message", self.test_obj.show())

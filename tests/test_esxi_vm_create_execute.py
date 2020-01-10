@@ -15,11 +15,11 @@ else:
     from unittest.mock import patch, mock_open  # pylint: disable=no-name-in-module,import-error,ungrouped-imports
 
 
-class TestMainPrepare(TestCase):
+class TestMainExecute(TestCase):
     """ Test main() function after initial work and preparing for changes. """
 
     def setUp(self):
-        MOCK_GETITEM_LOGFILE = "logfile"
+        mock_getitem_logfile = "logfile"
 
         print_patcher = patch('sys.stdout')
         saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
@@ -39,7 +39,7 @@ class TestMainPrepare(TestCase):
         self.setup_config_patch().__getitem__.side_effect = mock_getitem
         self.setup_config_patch().keys.side_effect = mock_keys
         self.datetime_patch.now.return_value = TEST_DATETIME
-        self.logfile_patch.return_value = MOCK_GETITEM_LOGFILE
+        self.logfile_patch.return_value = mock_getitem_logfile
 
         self.addCleanup(print_patcher.stop)
         self.addCleanup(saveconfig_patcher.stop)

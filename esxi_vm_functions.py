@@ -41,7 +41,6 @@ class Config:
         return logfile
 
     def setup_config(self):
-        self.logfile()
         self.set('LOG', self.logfile())
         self.set('isDryRun', False)
         self.set('isVerbose', False)
@@ -82,9 +81,6 @@ class Message:
     def __init__(self, text=""):
         """ Init object """
         self.messages = text
-
-    def __repr__(self):
-        return "Message({})".format(self.messages)
 
     def __str__(self):
         return str(self.messages)
