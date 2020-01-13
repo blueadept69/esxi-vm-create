@@ -581,3 +581,151 @@ class TestMainPrepare(TestCase):
              call.write('\n'),
              call.write('Dry Run: Failed.'),
              call.write('\n')])
+
+    @patch('sys.argv', testcases.TEST_ARGV_PLUS_EXIST_DSSTORE_BAD_VMXOPTS_NET)
+    def test_main_ssh_ls_except_bad_vmxopts_net(self):
+        """
+        Test mocking with --name and mocking ssh calls returning "Valid" Version (See elsewhere) and
+        valid info discovery - set to run as dry run. Raise exception when ssh ls -d runs, and
+        pass in invalid vmxopts
+        """
+        sys.stderr.write("=========> IN: test_main_ssh_ls_except_bad_vmxopts\n")
+
+        testcases.SSH_CONDITIONS = dict(testcases.SSH_BASE_CONDITIONS)
+        testcases.SSH_CONDITIONS.update(
+            {
+                "vim-cmd vmsvc/getallvms": {
+                    'stdout': [
+                        "Vmid           Name          "
+                        "                                  File                                    "
+                        "     Guest OS       Version   Annotation",
+                        "1      IB-ClearOS-112        "
+                        " [datastore1] IB-ClearOS-112/IB-ClearOS-112.vmx                           "
+                        " centos64Guest      vmx-10             ",
+                        "10     namearg               "
+                        " [VM-namearg-ds] namearg/namearg.vmx                                      "
+                        " freebsd64Guest     vmx-13             ",
+                        "11     Backup-Proxy-Host     "
+                        " [VM-FreeNAS-ds] Backup-Proxy-Host/Backup-Proxy-Host.vmx                  "
+                        " centos7_64Guest    vmx-14             ",
+                    ],
+                },
+                "ls -d {}/{}".format(testcases.TEST_EXIST_DSPATH,
+                                     testcases.TEST_EXIST_NAME):
+                    {
+                        'Exception': 'TestLSFail',
+                    }
+            }
+        )
+
+        with self.assertRaises(SystemExit):
+            main()
+        self.saveconfig_patch.assert_not_called()
+        self.print_patch.assert_has_calls(
+            [call.write("ERROR: Virtual NIC BadNet doesn't exist."),
+             call.write('\n'),
+             call.write("    Available VM NICs: ['Mgmt Temp PG 1', 'Mgmt Temp PG 0', 'VM Network', 'Management Network', 'IP over IB PG 1', 'Management Net IB 0', 'VM Network 1', 'IP over IB PG 2', 'Management IB Net 1', 'IPoIB Net 0', 'Management IB Net 0'] or 'None'"),
+             call.write('\n'),
+             call.write('ERROR: ISO /vmfs/volumes/path/to/iso not found.  Use full path to ISO'),
+             call.write('\n'),
+             call.write('VMX file:'),
+             call.write('\n'),
+             call.write('config.version = "8"'),
+             call.write('\n'),
+             call.write('virtualHW.version = "8"'),
+             call.write('\n'),
+             call.write('vmci0.present = "TRUE"'),
+             call.write('\n'),
+             call.write('displayName = "VM-Splunk-ds"'),
+             call.write('\n'),
+             call.write('floppy0.present = "FALSE"'),
+             call.write('\n'),
+             ########################
+             ########## NOTE THE **LACK OF** EXTRA SPACE!!!
+             ########################
+             call.write('numvcpus = "9"'),
+             call.write('\n'),
+             call.write('scsi0.present = "TRUE"'),
+             call.write('\n'),
+             call.write('scsi0.sharedBus = "none"'),
+             call.write('\n'),
+             call.write('scsi0.virtualDev = "pvscsi"'),
+             call.write('\n'),
+             call.write('memsize = "101376"'),
+             call.write('\n'),
+             call.write('scsi0:0.present = "TRUE"'),
+             call.write('\n'),
+             call.write('scsi0:0.fileName = "VM-Splunk-ds.vmdk"'),
+             call.write('\n'),
+             call.write('scsi0:0.deviceType = "scsi-hardDisk"'),
+             call.write('\n'),
+             call.write('ide1:0.present = "TRUE"'),
+             call.write('\n'),
+             call.write('ide1:0.fileName = "/vmfs/volumes/path/to/iso"'),
+             call.write('\n'),
+             call.write('ide1:0.deviceType = "cdrom-image"'),
+             call.write('\n'),
+             call.write('pciBridge0.present = "TRUE"'),
+             call.write('\n'),
+             call.write('pciBridge4.present = "TRUE"'),
+             call.write('\n'),
+             call.write('pciBridge4.virtualDev = "pcieRootPort"'),
+             call.write('\n'),
+             call.write('pciBridge4.functions = "8"'),
+             call.write('\n'),
+             call.write('pciBridge5.present = "TRUE"'),
+             call.write('\n'),
+             call.write('pciBridge5.virtualDev = "pcieRootPort"'),
+             call.write('\n'),
+             call.write('pciBridge5.functions = "8"'),
+             call.write('\n'),
+             call.write('pciBridge6.present = "TRUE"'),
+             call.write('\n'),
+             call.write('pciBridge6.virtualDev = "pcieRootPort"'),
+             call.write('\n'),
+             call.write('pciBridge6.functions = "8"'),
+             call.write('\n'),
+             call.write('pciBridge7.present = "TRUE"'),
+             call.write('\n'),
+             call.write('pciBridge7.virtualDev = "pcieRootPort"'),
+             call.write('\n'),
+             call.write('pciBridge7.functions = "8"'),
+             call.write('\n'),
+             call.write('guestOS = "guestosarg"'),
+             call.write('\n'),
+             call.write('ethernet0.virtualDev = "vmxnet3"'),
+             call.write('\n'),
+             call.write('ethernet0.present = "TRUE"'),
+             call.write('\n'),
+             call.write('ethernet0.networkName = "BadNet"'),
+             call.write('\n'),
+             call.write('ethernet0.addressType = "static"'),
+             call.write('\n'),
+             call.write('ethernet0.address = "12:34:56:78:9a:bc"'),
+             call.write('\n'),
+             call.write('\nDry Run summary:'),
+             call.write('\n'),
+             call.write('ESXi Host: hostarg'),
+             call.write('\n'),
+             call.write('VM NAME: VM-Splunk-ds'),
+             call.write('\n'),
+             call.write('vCPU: 9'),
+             call.write('\n'),
+             call.write('Memory: 99GB'),
+             call.write('\n'),
+             call.write('VM Disk: 999GB'),
+             call.write('\n'),
+             call.write('Format: thin'),
+             call.write('\n'),
+             call.write('DS Store: VM-Splunk-ds'),
+             call.write('\n'),
+             call.write('Network: BadNet'),
+             call.write('\n'),
+             call.write('ISO: /vmfs/volumes/path/to/iso'),
+             call.write('\n'),
+             call.write('Guest OS: guestosarg'),
+             call.write('\n'),
+             call.write('MAC: '),
+             call.write('\n'),
+             call.write('Dry Run: Failed.'),
+             call.write('\n')])

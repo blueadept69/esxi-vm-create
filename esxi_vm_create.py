@@ -105,10 +105,16 @@ def main():
         MAC=args.MAC
     if args.STORE:
         STORE=args.STORE
+    # By rights this should never be reached. If args.STORE is set, then below won't be True.
+    # If args.STORE is passed with an empty string, above won't be True. And setup_config
+    # should always set this as LeastUsed. Leaving here for future import of default configs
+    # from YML file.
     if STORE == "":
         STORE = "LeastUsed"
     if args.GUESTOS:
         GUESTOS=args.GUESTOS
+    # This should never be reached since ConfigData['VMXOPTS'] defaults to ""
+    # Leaving here for future import of default configs from YML file.
     if args.VMXOPTS == '' and ConfigData['VMXOPTS'] != '':
         ConfigData['VMXOPTS']=''
     if args.VMXOPTS and args.VMXOPTS != 'NIL':
@@ -395,6 +401,8 @@ def main():
             try:
                 ikey,ivalue = i.split("=")
             except:
+                # By rights this should never be reached, since VMX is created and populated by this
+                # code. Leaving for now since it doesn't hurt anything.
                 break
             if ikey.lstrip().strip().lower() == key.lower():
                 index = VMX.index(i)

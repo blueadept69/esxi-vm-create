@@ -13,6 +13,7 @@ else:
 TEST_ISO_NAME_ARG = "isoarg"
 TEST_ISO_PATH_ARG = "/vmfs/volumes/path/to/iso"
 TEST_VDISK_SIZE = '999'
+TEST_BAD_NET = 'BadNet'
 
 TEST_ARGV_BASE = ['esxi_vm_create.py',
                   # '--dry',
@@ -101,6 +102,15 @@ TEST_ARGV_PLUS_EXIST_DSSTORE_CPUS7.extend(['--dry',
                                            '--iso', TEST_ISO_PATH_ARG,
                                            '--options', 'numvcpus = "7"',
                                           ])
+
+TEST_ARGV_PLUS_EXIST_DSSTORE_BAD_VMXOPTS_NET = list(TEST_ARGV_BASE)
+TEST_ARGV_PLUS_EXIST_DSSTORE_BAD_VMXOPTS_NET.extend(['--dry',
+                                                     '--store', TEST_EXIST_DSPATH,
+                                                     '--name', TEST_EXIST_NAME,
+                                                     '--iso', TEST_ISO_PATH_ARG,
+                                                     '--net', TEST_BAD_NET,
+                                                     '--options', 'numvcpus "7"',
+                                                    ])
 
 TEST_ARGV_DRY_EMPTY_STORE_MAC_ISO_NONE = list(TEST_ARGV_BASE)
 TEST_ARGV_DRY_EMPTY_STORE_MAC_ISO_NONE.extend(['--dry',
