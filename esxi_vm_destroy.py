@@ -70,7 +70,7 @@ if args.NAME:
 #      main()
 #
 LogOutput = '{'
-LogOutput += '"datetime":"' + str(theCurrDateTime()) + '",'
+LogOutput += '"datetime":"' + str(current_datetime_iso_string()) + '",'
 
 if NAME == "":
     print "ERROR: Missing required option --name"
@@ -198,7 +198,7 @@ LogOutput += '"Verbose":"' + str(isVerbose) + '",'
 if ErrorMessages != "":
     LogOutput += '"Error Message":"' + ErrorMessages + '",'
 LogOutput += '"Result":"' + Result + '",'
-LogOutput += '"Completion Time":"' + str(theCurrDateTime()) + '"'
+LogOutput += '"Completion Time":"' + str(current_datetime_iso_string()) + '"'
 LogOutput += '}\n'
 try:
     with open(LOG, "a+w") as FD:

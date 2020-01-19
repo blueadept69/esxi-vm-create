@@ -7,7 +7,7 @@ import sys
 from esxi_vm_create import main
 from tests.test_esxi_vm_functions import TEST_DATETIME
 from tests import testcases
-from tests.testcases import mock_getitem, mock_keys
+# from tests.testcases import mock_getitem, mock_keys
 
 if sys.version_info.major == 2:
     from mock import patch, call, mock_open
@@ -22,29 +22,32 @@ class TestMainExecute(TestCase):
         mock_getitem_logfile = "logfile"
 
         print_patcher = patch('sys.stdout')
-        saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        # saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        new_save_config_patcher = patch('esxi_vm_create.Config.save_config')
         paramiko_patcher = patch('esxi_vm_create.paramiko')
-        setup_config_patcher = patch('esxi_vm_create.setup_config')
+        # setup_config_patcher = patch('esxi_vm_create.setup_config')
         datetime_patcher = patch('datetime.datetime')
         logfile_patcher = patch('esxi_vm_create.Config.logfile')
 
         self.print_patch = print_patcher.start()
-        self.saveconfig_patch = saveconfig_patcher.start()
+        # self.saveconfig_patch = saveconfig_patcher.start()
+        self.new_save_config_patch = new_save_config_patcher.start()
         self.paramiko_patch = paramiko_patcher.start()
-        self.setup_config_patch = setup_config_patcher.start()
+        # self.setup_config_patch = setup_config_patcher.start()
         self.datetime_patch = datetime_patcher.start()
         self.logfile_patch = logfile_patcher.start()
 
         self.paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
-        self.setup_config_patch().__getitem__.side_effect = mock_getitem
-        self.setup_config_patch().keys.side_effect = mock_keys
+        # self.setup_config_patch().__getitem__.side_effect = mock_getitem
+        # self.setup_config_patch().keys.side_effect = mock_keys
         self.datetime_patch.now.return_value = TEST_DATETIME
         self.logfile_patch.return_value = mock_getitem_logfile
 
         self.addCleanup(print_patcher.stop)
-        self.addCleanup(saveconfig_patcher.stop)
+        # self.addCleanup(saveconfig_patcher.stop)
+        self.addCleanup(new_save_config_patcher.stop)
         self.addCleanup(paramiko_patcher.stop)
-        self.addCleanup(setup_config_patcher.stop)
+        # self.addCleanup(setup_config_patcher.stop)
         self.addCleanup(datetime_patcher.stop)
         self.addCleanup(logfile_patcher.stop)
 
@@ -64,7 +67,7 @@ class TestMainExecute(TestCase):
             main()
         open_patch.assert_called()
         open_patch.assert_has_calls(
-            [call('logfile', 'a+w'),
+            [call('logfile', 'a'),
              call().__enter__(),
              call().write('{"datetime":"2019-12-08T21:30:09.031532",'
                           '"Host":"hostarg","Name":"namearg",'
@@ -77,7 +80,8 @@ class TestMainExecute(TestCase):
                           '"Result":"Success",'
                           '"Completion Time":"2019-12-08T21:30:09.031532"}\n'),
              call().__exit__(None, None, None)])
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('VMX file:'),
              call.write('\n'),
@@ -199,7 +203,7 @@ class TestMainExecute(TestCase):
             main()
         open_patch.assert_called()
         open_patch.assert_has_calls(
-            [call('logfile', 'a+w'),
+            [call('logfile', 'a'),
              call().__enter__(),
              call().write('{"datetime":"2019-12-08T21:30:09.031532",'
                           '"Host":"hostarg","Name":"namearg",'
@@ -213,7 +217,8 @@ class TestMainExecute(TestCase):
                           '"Result":"Fail",'
                           '"Completion Time":"2019-12-08T21:30:09.031532"}\n'),
              call().__exit__(None, None, None)])
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('VMX file:'),
              call.write('\n'),
@@ -353,7 +358,7 @@ class TestMainExecute(TestCase):
             main()
         open_patch.assert_called()
         open_patch.assert_has_calls(
-            [call('logfile', 'a+w'),
+            [call('logfile', 'a'),
              call().__enter__(),
              call().write('{"datetime":"2019-12-08T21:30:09.031532",'
                           '"Host":"hostarg","Name":"namearg",'
@@ -368,7 +373,8 @@ class TestMainExecute(TestCase):
                           '"Result":"Fail",'
                           '"Completion Time":"2019-12-08T21:30:09.031532"}\n'),
              call().__exit__(None, None, None)])
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('VMX file:'),
              call.write('\n'),

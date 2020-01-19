@@ -6,7 +6,6 @@ from unittest import TestCase
 import sys
 from esxi_vm_create import main
 from tests import testcases
-from tests.testcases import mock_getitem, mock_keys
 
 if sys.version_info.major == 2:
     from mock import patch, call
@@ -22,23 +21,21 @@ class TestMainInitial(TestCase):
     def setUp(self):
 
         print_patcher = patch('sys.stdout')
-        saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        # saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        new_save_config_patcher = patch('esxi_vm_create.Config.save_config')
         paramiko_patcher = patch('esxi_vm_create.paramiko')
-        setup_config_patcher = patch('esxi_vm_create.setup_config')
 
         self.print_patch = print_patcher.start()
-        self.saveconfig_patch = saveconfig_patcher.start()
+        # self.saveconfig_patch = saveconfig_patcher.start()
+        self.new_save_config_patch = new_save_config_patcher.start()
         self.paramiko_patch = paramiko_patcher.start()
-        self.setup_config_patch = setup_config_patcher.start()
 
         self.paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
-        self.setup_config_patch().__getitem__.side_effect = mock_getitem
-        self.setup_config_patch().keys.side_effect = mock_keys
 
         self.addCleanup(print_patcher.stop)
-        self.addCleanup(saveconfig_patcher.stop)
+        # self.addCleanup(saveconfig_patcher.stop)
+        self.addCleanup(new_save_config_patcher.stop)
         self.addCleanup(paramiko_patcher.stop)
-        self.addCleanup(setup_config_patcher.stop)
 
     @patch('sys.argv', ['esxi_vm_create.py', '-h'])
     def test_main_help(self):
@@ -46,9 +43,7 @@ class TestMainInitial(TestCase):
         sys.stderr.write("=========> IN: test_main_help\n")
         with self.assertRaises(SystemExit):
             main()
-        self.setup_config_patch.assert_called_with()
         self.assertIn("usage", str(self.print_patch.method_calls))
-
 
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_NAME_UPDATEDEFAULTS)
     def test_main_update_conf_no_name(self):
@@ -57,8 +52,8 @@ class TestMainInitial(TestCase):
         sys.stderr.write("=========> IN: test_main_update_conf_no_name\n")
         with self.assertRaises(SystemExit):
             main()
-        self.setup_config_patch.assert_called_with()
-        self.saveconfig_patch.assert_called_once()
+        # self.saveconfig_patch.assert_called_once()
+        self.new_save_config_patch.assert_called_once()
         self.print_patch.assert_has_calls(
             [call.write('Saving new Defaults to ~/.esxi-vm.yml'), call.write('\n')])
 
@@ -70,7 +65,8 @@ class TestMainInitial(TestCase):
         sys.stderr.write("=========> IN: test_main_no_update_no_name\n")
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: Missing required option --name'), call.write('\n')])
 
@@ -91,7 +87,8 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestExcept"),
              call.write('\n'),
@@ -117,7 +114,8 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('Unable to determine if this is a ESXi Host: hostarg, username: userarg'),
              call.write('\n'),
@@ -150,11 +148,11 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestVolumeFail"),
              call.write('\n')])
-
 
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE)
     def test_main_esxcli_portgroups_fail(self):
@@ -176,7 +174,8 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestPortgroupFail"),
              call.write('\n')])
@@ -201,7 +200,8 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestFindISOFail"),
              call.write('\n')])
@@ -226,7 +226,8 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write("The Error is <type 'exceptions.Exception'> - TestFindISOFail"),
              call.write('\n')])
@@ -250,7 +251,8 @@ class TestMainInitial(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('FoundISOPath: /vmfs/volumes/test/ISOs/isoarg'),
              call.write('\n'),

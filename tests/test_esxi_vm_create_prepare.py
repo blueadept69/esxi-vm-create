@@ -23,25 +23,28 @@ class TestMainPrepare(TestCase):
 
         print_patcher = patch('sys.stdout')
         log_patcher = patch('esxi_vm_create.Message.log_to_file')
-        saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        # saveconfig_patcher = patch('esxi_vm_create.SaveConfig')
+        new_save_config_patcher = patch('esxi_vm_create.Config.save_config')
         paramiko_patcher = patch('esxi_vm_create.paramiko')
-        setup_config_patcher = patch('esxi_vm_create.setup_config')
+        # setup_config_patcher = patch('esxi_vm_create.setup_config')
 
         self.print_patch = print_patcher.start()
         self.log_patch = log_patcher.start()
-        self.saveconfig_patch = saveconfig_patcher.start()
+        # self.saveconfig_patch = saveconfig_patcher.start()
+        self.new_save_config_patch = new_save_config_patcher.start()
         self.paramiko_patch = paramiko_patcher.start()
-        self.setup_config_patch = setup_config_patcher.start()
+        # self.setup_config_patch = setup_config_patcher.start()
 
         self.paramiko_patch.SSHClient().exec_command = testcases.mock_ssh_command
-        self.setup_config_patch().__getitem__.side_effect = mock_getitem
-        self.setup_config_patch().keys.side_effect = mock_keys
+        # self.setup_config_patch().__getitem__.side_effect = mock_getitem
+        # self.setup_config_patch().keys.side_effect = mock_keys
 
         self.addCleanup(print_patcher.stop)
         self.addCleanup(log_patcher.stop)
-        self.addCleanup(saveconfig_patcher.stop)
+        # self.addCleanup(saveconfig_patcher.stop)
+        self.addCleanup(new_save_config_patcher.stop)
         self.addCleanup(paramiko_patcher.stop)
-        self.addCleanup(setup_config_patcher.stop)
+        # self.addCleanup(setup_config_patcher.stop)
 
 
     @patch('sys.argv', testcases.TEST_ARGV_DRY_EMPTY_STORE_NO_ISO_AND_NET)
@@ -76,7 +79,8 @@ class TestMainPrepare(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
@@ -206,7 +210,8 @@ class TestMainPrepare(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
@@ -341,7 +346,8 @@ class TestMainPrepare(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: VM namearg already exists.'),
              call.write('\n'),
@@ -483,7 +489,8 @@ class TestMainPrepare(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write('ERROR: ISO /vmfs/volumes/path/to/iso not found.  Use full path to ISO'),
              call.write('\n'),
@@ -620,7 +627,8 @@ class TestMainPrepare(TestCase):
 
         with self.assertRaises(SystemExit):
             main()
-        self.saveconfig_patch.assert_not_called()
+        # self.saveconfig_patch.assert_not_called()
+        self.new_save_config_patch.assert_not_called()
         self.print_patch.assert_has_calls(
             [call.write("ERROR: Virtual NIC BadNet doesn't exist."),
              call.write('\n'),
